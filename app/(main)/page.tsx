@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { FiSearch, FiArrowDown, FiArrowUp, } from "react-icons/fi";
 import { IoWalletOutline } from "react-icons/io5";
 import MonthFilter from "@/components/month-filter";
@@ -112,14 +112,18 @@ export default function Home() {
         <div className="sticky top-6 z-100 flex items-center justify-between bg-white rounded-2xl p-2 px-4 shadow-sm border border-gray-100">
 
           {/* Filter Bulan */}
-          <MonthFilter />
+          <Suspense fallback={<div className="w-24 h-8 bg-gray-100 rounded-xl animate-pulse"></div>}>
+            <MonthFilter />
+          </Suspense>
 
           {/* Tombol Cari & Filter */}
           <div className="flex items-center gap-1">
             <button className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors active:scale-95">
               <FiSearch className="w-5 h-5" />
             </button>
-            <TransactionFilter />
+            <Suspense fallback={<div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse"></div>}>
+              <TransactionFilter />
+            </Suspense>
           </div>
 
         </div>
