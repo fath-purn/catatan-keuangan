@@ -1,6 +1,6 @@
 "use client";
 
-import { FaMagnifyingGlass } from "react-icons/fa6";
+import { FiSearch } from "react-icons/fi";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -23,19 +23,19 @@ export default function Search({ placeholder }: { placeholder: string }) {
   }, 300);
 
   return (
-    <div className="relative flex flex-1 flex-shrink-0">
+    <div className="bg-white/20 border-2 border-transparent focus-within:border-white rounded-2xl flex items-center px-4 py-3 transition-colors mt-2">
       <label htmlFor="search" className="sr-only">
         Search
       </label>
+      <FiSearch className="w-5 h-5 text-white mr-3" />
       <input
-        className="peer block w-full rounded-md border border-gray-400 py-[9px] pl-10 text-sm placeholder:text-gray-500"
+        className="bg-transparent border-none outline-none text-white placeholder-white/80 font-bold w-full text-sm"
         placeholder={placeholder}
         onChange={(e) => {
           handleSearch(e.target.value);
         }}
         defaultValue={searchParams.get("query")?.toString()}
       />
-      <FaMagnifyingGlass className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
     </div>
   );
 }

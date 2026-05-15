@@ -26,33 +26,29 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
 
   return (
     <div className="flex flex-col gap-1.5 relative">
-      <label className="text-xs font-bold text-gray-500 flex items-center gap-1.5 ml-1">
-        <Icon className="w-4 h-4" /> {label}
+      <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
+        <Icon className="w-3 h-3" /> {label}
       </label>
       {open && <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)}></div>}
-      <button 
+      <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`relative z-[70] flex items-center justify-between w-full bg-gray-50 border rounded-2xl px-4 py-3.5 text-sm font-semibold text-gray-800 transition-all ${
-          open ? "border-red-500 ring-2 ring-red-500/20 bg-white" : "border-gray-200 hover:bg-gray-100"
-        }`}
+        className="relative z-[70] flex items-center justify-between w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] transition-transform active:scale-95"
       >
         <span>{selected ? (selected.icon ? `${selected.icon} ${selected.label}` : selected.label) : defaultText}</span>
-        <FiChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${open ? "rotate-180 text-red-500" : ""}`} />
+        <FiChevronDown className={`w-4 h-4 text-black font-bold transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute top-[76px] left-0 right-0 z-[80] flex flex-col bg-white border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] overflow-hidden max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[80] flex flex-col bg-white border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden max-h-48 overflow-y-auto animate-in zoom-in-95 duration-150 origin-bottom">
           {options.map((o: any) => (
-             <button
-               type="button"
-               key={o.id}
-               onClick={() => { onChange(o.label); setOpen(false); }}
-               className={`text-left px-4 py-3.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
-                 value === o.label ? "bg-red-50 text-red-700 font-bold" : "text-gray-700 hover:bg-gray-50"
-               }`}
-             >
-               {o.icon && <span className="mr-2">{o.icon}</span>} {o.label}
-             </button>
+            <button
+              type="button"
+              key={o.id}
+              onClick={() => { onChange(o.label); setOpen(false); }}
+              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${value === o.label ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"}`}
+            >
+              {o.icon && <span className="mr-2">{o.icon}</span>} {o.label}
+            </button>
           ))}
         </div>
       )}
@@ -72,7 +68,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
   const [jenisTrx, setJenisTrx] = useState(transaction.jenis_transaksi); // true = pemasukan
 
   // Cek apakah ada data yang diedit
-  const isChanged = 
+  const isChanged =
     jenis !== transaction.jenis ||
     nominal !== transaction.nominal ||
     waktu !== transaction.waktu ||
@@ -88,91 +84,89 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
   };
 
   return (
-    <div className="absolute inset-0 z-[100] flex flex-col justify-end">
+    <div className="fixed inset-0 z-[100] flex flex-col justify-end font-sans sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto sm:rounded-[40px] overflow-hidden">
       <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
-      <div className="relative z-10 bg-white w-full rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-6 pb-8 flex flex-col gap-6 animate-in slide-in-from-bottom-10 duration-200 max-h-[90vh] overflow-hidden">
-        
+      <div className="relative z-10 bg-[#FDF8EE] w-full rounded-t-[32px] border-t-4 border-black shadow-[0_-4px_0_0_rgba(0,0,0,1)] p-6 pb-8 flex flex-col gap-6 animate-in slide-in-from-bottom-10 duration-200 max-h-[90vh] overflow-hidden">
+
         {/* Handle bar & Header */}
         <div className="shrink-0 flex flex-col">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-3"></div>
-            <div className="flex items-center justify-between">
-            <h3 className="font-bold text-gray-800 text-xl">Detail Transaksi</h3>
-            <button onClick={onClose} className="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-full transition-colors">
-                <FiX className="w-6 h-6" />
+          {/* <div className="w-12 h-2 bg-black rounded-full mx-auto mb-4"></div> */}
+          <div className="flex items-center justify-between">
+            <h3 className="font-black text-black text-xl uppercase">Detail Transaksi</h3>
+            <button onClick={onClose} className="p-2 bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform">
+              <FiX className="w-5 h-5 text-black font-bold" />
             </button>
-            </div>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-6 pb-4">
-            {/* Toggle Pemasukan / Pengeluaran */}
-            <div className="flex bg-gray-100 p-1 rounded-2xl relative shrink-0">
-            <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-all duration-300 ${jenisTrx ? "translate-x-full left-[4px]" : "translate-x-0 left-[4px]"}`}></div>
-            <button type="button" onClick={() => setJenisTrx(false)} className={`relative z-10 flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${!jenisTrx ? "text-red-600" : "text-gray-500"}`}>Pengeluaran</button>
-            <button type="button" onClick={() => setJenisTrx(true)} className={`relative z-10 flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${jenisTrx ? "text-green-600" : "text-gray-500"}`}>Pemasukan</button>
-            </div>
+        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-6 pb-4 px-1">
+          {/* Toggle Pemasukan / Pengeluaran */}
+          <div className="flex bg-white gap-2 border-2 border-black p-1.5 rounded-2xl shadow-[4px_4px_0_0_#000] shrink-0">
+            <button type="button" onClick={() => setJenisTrx(false)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${!jenisTrx ? "bg-[#FF7676] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PENGELUARAN</button>
+            <button type="button" onClick={() => setJenisTrx(true)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${jenisTrx ? "bg-[#60D689] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PEMASUKAN</button>
+          </div>
 
-            {/* Nominal */}
-            <div className={`flex flex-col items-center justify-center p-5 rounded-3xl border border-gray-100 transition-colors focus-within:ring-2 focus-within:ring-red-500/20 ${jenisTrx ? 'bg-green-50' : 'bg-red-50'}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${jenisTrx ? 'text-green-600/70' : 'text-red-600/70'}`}>Nominal</p>
-                <div className="flex items-center text-4xl font-black text-gray-800">
-                <span className="mr-2 text-2xl text-gray-400">Rp</span>
-                <input type="text" inputMode="numeric" value={nominal} onChange={handleNominalChange} className="bg-transparent border-none outline-none text-center w-[180px] p-0" />
-                </div>
+          {/* Nominal */}
+          <div className="flex flex-col items-center">
+            <p className="text-[10px] font-bold mb-2 uppercase tracking-wider text-black">Nominal</p>
+            <div className="flex items-center justify-center w-full bg-white border-4 border-black rounded-[32px] py-6 px-4 shadow-[8px_8px_0_0_#000]">
+              <span className="text-3xl font-black mr-2 text-black">Rp</span>
+              <input type="text" inputMode="numeric" value={nominal} onChange={handleNominalChange} className="bg-transparent border-none outline-none text-4xl font-black text-black w-full text-center p-0" />
             </div>
+          </div>
 
-            {/* Keterangan */}
-            <div className="flex items-center gap-3 border-b border-gray-100 pb-2 focus-within:border-gray-300 transition-colors">
-                <div className="p-3 bg-gray-50 rounded-xl text-gray-400"><FiEdit2 className="w-5 h-5" /></div>
-                <div className="flex-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Keterangan / Catatan</label>
-                <input type="text" value={jenis} onChange={e => setJenis(e.target.value)} className="w-full bg-transparent border-none outline-none text-gray-800 font-bold text-base p-0" />
-                </div>
-            </div>
+          {/* Keterangan */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
+              <FiEdit2 className="w-3 h-3" /> Keterangan
+            </label>
+            <input type="text" value={jenis} onChange={e => setJenis(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none" />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <CustomSelect label="Kategori" icon={FiTag} value={kategori} onChange={setKategori} options={KATEGORI_LIST} defaultText="Pilih" />
-                <CustomSelect label="Aset" icon={FiCreditCard} value={aset} onChange={setAset} options={ASET_LIST} defaultText="Pilih" />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <CustomSelect label="Kategori" icon={FiTag} value={kategori} onChange={setKategori} options={KATEGORI_LIST} defaultText="Pilih" />
+            <CustomSelect label="Aset" icon={FiCreditCard} value={aset} onChange={setAset} options={ASET_LIST} defaultText="Pilih" />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                {/* Waktu */}
-                <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-gray-500 flex items-center gap-1.5 ml-1"><FiClock className="w-4 h-4"/> Waktu</label>
-                <input type="time" value={waktu} onChange={e => setWaktu(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-red-500/20" />
-                </div>
-                {/* Mood */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-gray-500 flex items-center gap-1.5 ml-1"><FiSmile className="w-4 h-4" /> Mood</label>
-                    <div className="relative">
-                        <select
-                        value={mood}
-                        onChange={e => setMood(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-red-500/20 transition-all appearance-none"
-                        >
-                            <option value="Senang">😊 Senang</option>
-                            <option value="Biasa">😐 Biasa</option>
-                            <option value="Sedih">😢 Sedih</option>
-                            <option value="Marah">😡 Marah</option>
-                        </select>
-                        <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                    </div>
-                </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Waktu */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1"><FiClock className="w-3 h-3" /> Waktu</label>
+              <input type="time" value={waktu} onChange={e => setWaktu(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none" />
             </div>
+            {/* Mood */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1"><FiSmile className="w-3 h-3" /> Mood</label>
+              <div className="relative">
+                <select
+                  value={mood}
+                  onChange={e => setMood(e.target.value)}
+                  className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none appearance-none"
+                >
+                  <option value="Senang">😊 Senang</option>
+                  <option value="Biasa">😐 Biasa</option>
+                  <option value="Sedih">😢 Sedih</option>
+                  <option value="Marah">😡 Marah</option>
+                </select>
+                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black font-bold pointer-events-none" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2 border-t border-gray-100 shrink-0">
-          <button onClick={() => { alert('Transaksi berhasil dihapus'); onClose(); }} className="flex items-center justify-center gap-2 px-5 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors active:scale-95" title="Hapus">
-            <FiTrash2 className="w-5 h-5" />
+        <div className="flex gap-3 pt-4 shrink-0">
+          <button onClick={() => { alert('Transaksi berhasil dihapus'); onClose(); }} className="flex items-center justify-center px-5 py-4 bg-[#FF7676] text-black border-4 border-black font-bold rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-red-400 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none" title="Hapus">
+            <FiTrash2 className="w-6 h-6" />
           </button>
           {isChanged ? (
-            <button onClick={() => { alert('Perubahan disimpan!'); onClose(); }} className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 hover:bg-red-700 transition-colors active:scale-[0.98]">
+            <button onClick={() => { alert('Perubahan disimpan!'); onClose(); }} className="flex-1 py-4 bg-[#E4F087] text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none">
               Simpan Perubahan
             </button>
           ) : (
-             <button onClick={onClose} className="flex-1 py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-colors active:scale-[0.98]">
-               Tutup
-             </button>
+            <button onClick={onClose} className="flex-1 py-4 bg-white text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-gray-100 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none">
+              Tutup
+            </button>
           )}
         </div>
 

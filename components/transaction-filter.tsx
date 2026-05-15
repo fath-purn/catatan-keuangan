@@ -1,8 +1,166 @@
 "use client";
 
 import { useState } from "react";
-import { FiFilter, FiX, FiChevronDown } from "react-icons/fi";
+import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+export function TransactionTypeTabs() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { replace } = useRouter();
+
+  const currentJenis = searchParams.get("jenis") || "Semua";
+
+  const handleTabClick = (tab: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (tab === "Semua") {
+      params.delete("jenis");
+    } else {
+      params.set("jenis", tab);
+    }
+    replace(`${pathname}?${params.toString()}`);
+  };
+
+  return (
+    <div className="flex gap-1 bg-[#FDF8EE] p-1.5 rounded-2xl border-2 border-black shadow-inner">
+      {["Semua", "Pemasukan", "Pengeluaran"].map((t) => {
+        const isActive = currentJenis === t || (currentJenis === "" && t === "Semua");
+        return (
+          <button
+            key={t}
+            onClick={() => handleTabClick(t)}
+            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${isActive
+              ? "bg-black text-[#E4F087] shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]"
+              : "text-black/60 hover:bg-black/5"
+              }`}
+          >
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TransactionTimeFilter() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { replace } = useRouter();
+
+  const [showPicker, setShowPicker] = useState(false);
+  const date = new Date();
+
+  const currentBulanParam = searchParams.get("bulan");
+  const currentTahunParam = searchParams.get("tahun");
+
+  const currentMonth = currentBulanParam ? parseInt(currentBulanParam) - 1 : date.getMonth();
+  const currentYear = currentTahunParam ? parseInt(currentTahunParam) : date.getFullYear();
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+  const getDisplayText = () => {
+    if (!currentBulanParam || !currentTahunParam) return "Semua Bulan";
+    return `${monthNames[currentMonth]} ${currentYear}`;
+  };
+
+  const handleSelectMonth = (monthIndex: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("bulan", (monthIndex + 1).toString());
+    params.set("tahun", selectedYear.toString());
+    replace(`${pathname}?${params.toString()}`);
+    setShowPicker(false);
+  };
+
+  const handleReset = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("bulan");
+    params.delete("tahun");
+    replace(`${pathname}?${params.toString()}`);
+    setShowPicker(false);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          setSelectedYear(currentYear);
+          setShowPicker(true);
+        }}
+        className="relative flex items-center justify-between w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform text-left"
+      >
+        <span>{getDisplayText()}</span>
+        <FiChevronDown className="w-4 h-4 text-black font-bold" />
+      </button>
+
+      {showPicker && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto sm:rounded-[40px] overflow-hidden">
+          <div
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setShowPicker(false)}
+          ></div>
+
+          <div className="relative z-10 bg-white w-full max-w-sm rounded-[32px] border-4 border-black shadow-[8px_8px_0_0_#000] p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-black text-black text-xl uppercase">Filter Waktu</h3>
+              <button
+                onClick={() => setShowPicker(false)}
+                className="w-8 h-8 flex items-center justify-center bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform"
+              >
+                <FiX className="w-5 h-5 text-black font-bold" />
+              </button>
+            </div>
+
+            {/* Pengontrol Tahun */}
+            <div className="flex items-center justify-between bg-[#FDF8EE] border-2 border-black p-2 rounded-xl shadow-inner">
+              <button
+                onClick={() => setSelectedYear(y => y - 1)}
+                className="p-2 text-black bg-white border-2 border-black shadow-[2px_2px_0_0_#000] rounded-lg active:scale-95 transition-all"
+              >
+                <FiChevronLeft className="w-5 h-5 font-bold" />
+              </button>
+              <span className="font-black text-black text-lg">{selectedYear}</span>
+              <button
+                onClick={() => setSelectedYear(y => y + 1)}
+                className="p-2 text-black bg-white border-2 border-black shadow-[2px_2px_0_0_#000] rounded-lg active:scale-95 transition-all"
+              >
+                <FiChevronRight className="w-5 h-5 font-bold" />
+              </button>
+            </div>
+
+            {/* Grid Bulan */}
+            <div className="grid grid-cols-3 gap-3">
+              {monthNames.map((m, i) => {
+                const isSelected = i === currentMonth && selectedYear === currentYear && currentBulanParam;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => handleSelectMonth(i)}
+                    className={`py-3 rounded-xl text-xs font-black border-2 border-black shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform ${isSelected
+                      ? "bg-black text-[#E4F087]"
+                      : "bg-white text-black hover:bg-gray-100"
+                      }`}
+                  >
+                    {m.substring(0, 3).toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={handleReset}
+              className="mt-2 w-full py-3 rounded-xl text-xs font-black text-black bg-gray-200 border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-gray-300 transition-colors active:scale-95"
+            >
+              Semua Bulan (Reset)
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan & Minuman" },
@@ -33,50 +191,46 @@ function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty 
   const selected = options.find((o: any) => o.id === value);
 
   return (
-    <div className="flex flex-col gap-2.5 relative">
-      <label className="text-sm font-bold text-gray-700">{label}</label>
-      
+    <div className="flex flex-col gap-1.5 relative">
+      <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">{label}</label>
+
       {/* Overlay layar penuh untuk menutup dropdown ketika klik di luar */}
       {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)}></div>}
 
-      <button 
+      <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`relative z-20 flex items-center justify-between w-full bg-gray-50 border rounded-xl p-3.5 text-sm text-gray-800 transition-all ${
-          open ? "border-red-500 ring-2 ring-red-500/20 bg-white" : "border-gray-200 hover:bg-gray-100"
-        }`}
+        className={`relative z-20 flex items-center justify-between w-full bg-white border-2 border-black rounded-xl p-3 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] transition-transform active:scale-95`}
       >
         <span>
-          {selected 
-            ? (selected.icon ? `${selected.icon} ${selected.label}` : selected.label) 
+          {selected
+            ? (selected.icon ? `${selected.icon} ${selected.label}` : selected.label)
             : defaultText}
         </span>
-        <FiChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${open ? "rotate-180 text-red-500" : ""}`} />
+        <FiChevronDown className={`w-4 h-4 text-black font-bold transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute top-[82px] left-0 right-0 z-30 flex flex-col bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] overflow-hidden max-h-56 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute top-14 left-0 right-0 z-30 flex flex-col bg-white border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden max-h-56 overflow-y-auto animate-in zoom-in-95 duration-150">
           {!hideEmpty && (
             <button
               onClick={() => { onChange(""); setOpen(false); }}
-              className={`text-left px-4 py-3.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
-                !value ? "bg-red-50 text-red-700 font-bold" : "text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${!value ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"
+                }`}
             >
               {defaultText}
             </button>
           )}
           {options.map((o: any) => (
-             <button
-               key={o.id}
-               onClick={() => { onChange(o.id); setOpen(false); }}
-               className={`text-left px-4 py-3.5 text-sm transition-colors border-b border-gray-50 last:border-0 ${
-                 value === o.id ? "bg-red-50 text-red-700 font-bold" : "text-gray-700 hover:bg-gray-50"
-               }`}
-             >
-               {o.icon && <span className="mr-2">{o.icon}</span>}
-               {o.label}
-             </button>
+            <button
+              key={o.id}
+              onClick={() => { onChange(o.id); setOpen(false); }}
+              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${value === o.id ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"
+                }`}
+            >
+              {o.icon && <span className="mr-2">{o.icon}</span>}
+              {o.label}
+            </button>
           ))}
         </div>
       )}
@@ -85,7 +239,7 @@ function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty 
 }
 
 
-export default function TransactionFilter() {
+export default function TransactionFilter({ triggerClassName, triggerContent }: { triggerClassName?: string, triggerContent?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -100,7 +254,7 @@ export default function TransactionFilter() {
 
   const handleApply = () => {
     const params = new URLSearchParams(searchParams);
-    
+
     if (kategori) params.set("kategori", kategori);
     else params.delete("kategori");
 
@@ -126,60 +280,40 @@ export default function TransactionFilter() {
 
   return (
     <>
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
-        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors active:scale-95 relative"
+        className={triggerClassName || "w-8 h-8 flex items-center justify-center bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform relative"}
       >
-        <FiFilter className="w-5 h-5" />
+        {triggerContent || <FiFilter className="w-4 h-4 text-black font-bold" />}
         {isFilterActive && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF7676] rounded-full border border-black"></span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end">
-          <div 
-            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
             onClick={() => setIsOpen(false)}
           ></div>
-          
-          <div className="relative z-10 bg-white w-full rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-6 pb-10 flex flex-col gap-5 animate-in slide-in-from-bottom-10 duration-200">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
-            
+
+          <div className="relative z-10 bg-white w-full max-w-sm rounded-[32px] border-4 border-black shadow-[8px_8px_0_0_#000] p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200">
+
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-gray-800 text-xl">Filter Transaksi</h3>
-              <button 
-                onClick={() => setIsOpen(false)} 
-                className="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-full transition-colors"
+              <h3 className="font-black text-black text-xl uppercase">Filter Transaksi</h3>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-8 h-8 flex items-center justify-center bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform"
               >
-                <FiX className="w-6 h-6" />
+                <FiX className="w-5 h-5 text-black font-bold" />
               </button>
             </div>
 
-            <div className="flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10">
-              
-              {/* Jenis Transaksi */}
-              <div className="flex flex-col gap-3">
-                <label className="text-sm font-bold text-gray-700">Jenis Transaksi</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["Pemasukan", "Pengeluaran"].map(j => (
-                    <button
-                      key={j}
-                      onClick={() => setJenis(jenis === j ? "" : j)}
-                      className={`py-3.5 rounded-2xl text-sm font-semibold transition-all active:scale-95 ${
-                        jenis === j 
-                          ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-                          : "bg-white text-gray-600 border border-gray-200 hover:border-red-300 hover:bg-red-50"
-                      }`}
-                    >
-                      {j}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto no-scrollbar pb-2">
 
+              {/* Jenis Transaksi */}
               {/* Kategori - Custom Select */}
-              <CustomSelect 
+              <CustomSelect
                 label="Kategori"
                 value={kategori}
                 onChange={setKategori}
@@ -188,7 +322,7 @@ export default function TransactionFilter() {
               />
 
               {/* Mood - Custom Select */}
-              <CustomSelect 
+              <CustomSelect
                 label="Mood"
                 value={mood}
                 onChange={setMood}
@@ -197,7 +331,7 @@ export default function TransactionFilter() {
               />
 
               {/* Urutkan - Custom Select */}
-              <CustomSelect 
+              <CustomSelect
                 label="Urutkan"
                 value={sort}
                 onChange={setSort}
@@ -209,20 +343,20 @@ export default function TransactionFilter() {
             </div>
 
             <div className="flex gap-3 mt-2">
-              <button 
+              <button
                 onClick={handleReset}
-                className="w-1/3 py-3.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors active:scale-95"
+                className="w-1/3 py-3 rounded-xl text-xs font-black text-black bg-gray-200 border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-gray-300 transition-colors active:scale-95"
               >
                 Reset
               </button>
-              <button 
+              <button
                 onClick={handleApply}
-                className="w-2/3 py-3.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30 active:scale-95"
+                className="w-2/3 py-3 rounded-xl text-xs font-black text-black bg-[#E4F087] border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-[#d4e076] transition-colors active:scale-95"
               >
                 Terapkan
               </button>
             </div>
-            
+
           </div>
         </div>
       )}
