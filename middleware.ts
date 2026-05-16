@@ -10,17 +10,15 @@ export function middleware(request: NextRequest) {
 
   const isLoggedin = !!sessionToken;
 
-  // Logika Redirect: Jika akses / tanpa login
-  if (pathname.startsWith("/") && !isLoggedin) {
+  const isAuthRoute = pathname.startsWith("/auth");
+
+  // Logika Redirect: Jika akses halaman terproteksi tanpa login
+  if (!isLoggedin && !isAuthRoute) {
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
 
-  // Logika Redirect: Jika sudah login tapi coba buka /signin atau /register
-  if (
-    (pathname.startsWith("/auth/signin") ||
-      pathname.startsWith("/auth/register")) &&
-    isLoggedin
-  ) {
+  // Logika Redirect: Jika sudah login tapi coba buka halaman auth
+  if (isLoggedin && isAuthRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 }

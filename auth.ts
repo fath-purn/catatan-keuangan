@@ -6,6 +6,7 @@ import { LoginSchema } from "@/lib/zod";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   providers: [
     Credentials({
