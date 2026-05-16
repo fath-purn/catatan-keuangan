@@ -20,6 +20,12 @@ const ASET_LIST = [
   { id: "Gopay", icon: "📱", label: "Gopay" },
 ];
 
+const JENIS_TRANSAKSI = [
+  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
+  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
+  { id: "Emergency", icon: "🆘", label: "Emergency" },
+];
+
 function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText }: any) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o: any) => o.label === value || o.id === value);
@@ -65,6 +71,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
   const [kategori, setKategori] = useState(transaction.kategori);
   const [aset, setAset] = useState(transaction.aset);
   const [mood, setMood] = useState(transaction.mood);
+  const [keperluan, setKeperluan] = useState(transaction.keperluan);
   const [jenisTrx, setJenisTrx] = useState(transaction.jenis_transaksi); // true = pemasukan
 
   // Cek apakah ada data yang diedit
@@ -127,6 +134,15 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             <CustomSelect label="Kategori" icon={FiTag} value={kategori} onChange={setKategori} options={KATEGORI_LIST} defaultText="Pilih" />
             <CustomSelect label="Aset" icon={FiCreditCard} value={aset} onChange={setAset} options={ASET_LIST} defaultText="Pilih" />
           </div>
+
+          <CustomSelect
+            label="Keperluan"
+            icon={FiTag}
+            value={keperluan}
+            onChange={setKeperluan}
+            options={JENIS_TRANSAKSI}
+            defaultText="Pilih Jenis Transaksi"
+          />
 
           <div className="grid grid-cols-2 gap-4">
             {/* Waktu */}

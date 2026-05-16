@@ -27,6 +27,7 @@ export default function TransaksiPage() {
           kategori: "Pemasukan",
           aset: "BCA",
           mood: "Senang",
+          keperluan: "Impulsif",
           jenis_transaksi: true,
         },
         {
@@ -37,6 +38,7 @@ export default function TransaksiPage() {
           kategori: "Makanan",
           aset: "Cash",
           mood: "Biasa",
+          keperluan: "Goals",
           jenis_transaksi: false,
         }
       ]
@@ -58,6 +60,7 @@ export default function TransaksiPage() {
           kategori: "Transportasi",
           aset: "Cash",
           mood: "Biasa",
+          keperluan: "Emergency",
           jenis_transaksi: false,
         }
       ]
@@ -179,7 +182,7 @@ export default function TransaksiPage() {
                             <div className="flex flex-col gap-1">
                               <span className="font-black text-black text-sm leading-none">{trx.jenis}</span>
                               <div className="flex items-center gap-1.5 text-[9px] font-bold text-black mt-0.5">
-                                <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{trx.waktu}</span>
+                                <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{trx.keperluan}</span>
                                 <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{trx.kategori}</span>
                                 <span className="text-sm ml-0.5 drop-shadow-md" title={trx.mood}>{getMoodEmoji(trx.mood)}</span>
                               </div>

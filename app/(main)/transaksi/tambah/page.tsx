@@ -28,6 +28,7 @@ const JENIS_TRANSAKSI = [
   { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
   { id: "Emergency", icon: "🆘", label: "Emergency" },
 ];
+
 const GOALS_LIST = [
   { id: "1", icon: "📱", label: "Beli iPhone 15" },
   { id: "2", icon: "💻", label: "Macbook Pro" },
@@ -44,7 +45,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
   const [searchQuery, setSearchQuery] = useState("");
   const selected = options.find((o: any) => o.id === value);
 
-  const filteredOptions = options.filter((o: any) => 
+  const filteredOptions = options.filter((o: any) =>
     o.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -154,7 +155,7 @@ export default function TambahTransaksi() {
         <div className="w-10"></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col pb-10">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
 
         {/* Toggle Pemasukan / Pengeluaran */}
         <div className="p-5">

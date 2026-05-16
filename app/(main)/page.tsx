@@ -40,41 +40,11 @@ export default function Home() {
             kategori: "Pemasukan",
             aset: "BCA",
             mood: "Senang",
+            keperluan: "Goals",
             jenis_transaksi: true,
           },
-          {
-            id: 2,
-            jenis: "Beli Kopi",
-            nominal: "10.000",
-            waktu: "10:30",
-            kategori: "Makanan",
-            aset: "Cash",
-            mood: "Biasa",
-            jenis_transaksi: false,
-          }
         ]
       },
-      {
-        id: 2,
-        tanggal: "13",
-        hari: "Sabtu",
-        bulan: "Mei",
-        tahun: "2026",
-        totalPendapatan: "0",
-        totalPengeluaran: "10.000",
-        data: [
-          {
-            id: 3,
-            jenis: "Parkir",
-            nominal: "10.000",
-            waktu: "15:12",
-            kategori: "Transportasi",
-            aset: "Cash",
-            mood: "Biasa",
-            jenis_transaksi: false,
-          }
-        ]
-      }
     ]
   }
 
@@ -170,6 +140,9 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-black mt-0.5">
                     <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{lastTrx.tanggal} {lastTrx.bulan}</span>
                     <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{lastTrx.kategori}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-black mt-0.5">
+                    <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{lastTrx.keperluan}</span>
                   </div>
                 </div>
               </div>

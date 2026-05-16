@@ -107,9 +107,9 @@ export default function GoalsPage() {
                   </div>
                 </div>
 
-                <button className="w-8 h-8 bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] flex items-center justify-center active:scale-95 shrink-0">
-                  <FiEdit2 className="w-3 h-3" />
-                </button>
+                <Link href={`/goals/edit/${goal.id}`} className="w-8 h-8 bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] flex items-center justify-center active:scale-95 shrink-0">
+                  <FiEdit2 className="w-3 h-3 text-black" />
+                </Link>
               </div>
 
               <p className="text-[11px] font-bold text-black/80 mb-4 px-1 italic">
