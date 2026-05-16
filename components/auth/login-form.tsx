@@ -75,7 +75,7 @@ export default function LoginForm() {
 
         <p className="text-center text-[10px] font-black text-black mt-4">
           Belum punya akun?{" "}
-          <Link href="/register" className="text-[#60D689] bg-white px-2 py-1 border-2 border-black rounded-lg shadow-[1px_1px_0_0_#000] active:scale-95 transition-transform inline-block ml-1">
+          <Link href="/auth/register" className="text-[#60D689] bg-white px-2 py-1 border-2 border-black rounded-lg shadow-[1px_1px_0_0_#000] active:scale-95 transition-transform inline-block ml-1">
             Daftar di sini
           </Link>
         </p>

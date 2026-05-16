@@ -83,7 +83,7 @@ export default function RegisterForm() {
 
         <p className="text-center text-[10px] font-black text-black mt-4">
           Sudah punya akun?{" "}
-          <Link href="/signin" className="text-black bg-[#E4F087] px-2 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform inline-block ml-1">
+          <Link href="/auth/signin" className="text-black bg-[#E4F087] px-2 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform inline-block ml-1">
             Login di sini
           </Link>
         </p>
