@@ -9,62 +9,60 @@ import Search from "@/components/search";
 
 export default function TransaksiPage() {
   // Data dipisah supaya mudah di-fetch dari backend nantinya
-  const data = {
-    transaksi: [
-      {
-        id: 1,
-        tanggal: "14",
-        hari: "Minggu",
-        bulan: "Mei",
-        tahun: "2026",
-        totalPendapatan: "3.000.000",
-        totalPengeluaran: "10.000",
-        data: [
-          {
-            id: 1,
-            jenis: "Gaji Bulanan",
-            nominal: "3.000.000",
-            waktu: "09:00",
-            kategori: "Pemasukan",
-            aset: "BCA",
-            mood: "Senang",
-            jenis_transaksi: true,
-          },
-          {
-            id: 2,
-            jenis: "Beli Kopi",
-            nominal: "10.000",
-            waktu: "10:30",
-            kategori: "Makanan",
-            aset: "Cash",
-            mood: "Biasa",
-            jenis_transaksi: false,
-          }
-        ]
-      },
-      {
-        id: 2,
-        tanggal: "13",
-        hari: "Sabtu",
-        bulan: "Mei",
-        tahun: "2026",
-        totalPendapatan: "0",
-        totalPengeluaran: "10.000",
-        data: [
-          {
-            id: 3,
-            jenis: "Parkir",
-            nominal: "10.000",
-            waktu: "15:12",
-            kategori: "Transportasi",
-            aset: "Cash",
-            mood: "Biasa",
-            jenis_transaksi: false,
-          }
-        ]
-      }
-    ]
-  };
+  const data = [
+    {
+      id: 1,
+      tanggal: "14",
+      hari: "Minggu",
+      bulan: "Mei",
+      tahun: "2026",
+      totalPendapatan: "3.000.000",
+      totalPengeluaran: "10.000",
+      data: [
+        {
+          id: 1,
+          jenis: "Gaji Bulanan",
+          nominal: "3.000.000",
+          waktu: "09:00",
+          kategori: "Pemasukan",
+          aset: "BCA",
+          mood: "Senang",
+          jenis_transaksi: true,
+        },
+        {
+          id: 2,
+          jenis: "Beli Kopi",
+          nominal: "10.000",
+          waktu: "10:30",
+          kategori: "Makanan",
+          aset: "Cash",
+          mood: "Biasa",
+          jenis_transaksi: false,
+        }
+      ]
+    },
+    {
+      id: 2,
+      tanggal: "13",
+      hari: "Sabtu",
+      bulan: "Mei",
+      tahun: "2026",
+      totalPendapatan: "0",
+      totalPengeluaran: "10.000",
+      data: [
+        {
+          id: 3,
+          jenis: "Parkir",
+          nominal: "10.000",
+          waktu: "15:12",
+          kategori: "Transportasi",
+          aset: "Cash",
+          mood: "Biasa",
+          jenis_transaksi: false,
+        }
+      ]
+    }
+  ];
 
   // State untuk interaktivitas UI
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
@@ -124,7 +122,7 @@ export default function TransaksiPage() {
         </div>
 
         {/* Transaction List / Empty State */}
-        {data.transaksi.length === 0 ? (
+        {data.length === 0 ? (
           /* Empty State */
           <div className="bg-white border-2 border-black rounded-3xl p-8 shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center text-center gap-2 mt-2">
             <span className="text-6xl drop-shadow-md mb-2">📫</span>
@@ -137,7 +135,7 @@ export default function TransaksiPage() {
         ) : (
           /* Daftar Transaksi (Sama seperti Beranda) */
           <div className="flex flex-col gap-6 mt-2 pb-4">
-            {data.transaksi.map((group) => {
+            {data.map((group) => {
               return (
                 <div key={group.id} className="flex flex-col gap-3">
                   {/* Header Tanggal */}

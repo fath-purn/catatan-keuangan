@@ -84,7 +84,7 @@ export default function Home() {
   const lastTrx = lastGroup?.data[0] ? { ...lastGroup.data[0], tanggal: lastGroup.tanggal, bulan: lastGroup.bulan, tahun: lastGroup.tahun } : null;
 
   return (
-    <div className="min-h-full bg-[#FDF8EE] relative font-sans text-black overflow-x-hidden">
+    <div className="min-h-full bg-[#FDF8EE] pb-2 relative font-sans text-black overflow-x-hidden">
       {/* Header Profile */}
       <div className="bg-[#FF7676] px-4 pt-8 pb-8 rounded-b-[40px] border-b-4 border-black shadow-[0_8px_0_0_#000] relative z-10">
         <div className="flex justify-between items-center">

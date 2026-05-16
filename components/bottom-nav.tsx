@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiHome, FiList, FiPlus, FiPieChart, FiUser } from "react-icons/fi";
+import { FiHome, FiList, FiPlus, FiFlag, FiUser } from "react-icons/fi";
 import clsx from "clsx";
 
 export default function BottomNav() {
@@ -12,7 +12,7 @@ export default function BottomNav() {
     { name: "Beranda", href: "/", icon: FiHome },
     { name: "Transaksi", href: "/transaksi", icon: FiList },
     { name: "Tambah", href: "/transaksi/tambah", icon: FiPlus, isMain: true },
-    { name: "Laporan", href: "/laporan", icon: FiPieChart },
+    { name: "Goals", href: "/goals", icon: FiFlag },
     { name: "Profile", href: "/profile", icon: FiUser },
   ];
 

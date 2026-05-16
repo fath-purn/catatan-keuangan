@@ -6,10 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const KATEGORI_LIST = [
-  { id: "Goals", icon: "🎯", label: "Goals" },
-  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
-  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
-  { id: "Emergency", icon: "🆘", label: "Emergency" },
   { id: "Makanan", icon: "🍔", label: "Makanan" },
   { id: "Transportasi", icon: "🚗", label: "Transport" },
   { id: "Belanja", icon: "🛍️", label: "Belanja" },
@@ -26,10 +22,36 @@ const ASET_LIST = [
   { id: "Gopay", icon: "📱", label: "Gopay" },
 ];
 
+const JENIS_TRANSAKSI = [
+  { id: "Goals", icon: "🎯", label: "Goals" },
+  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
+  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
+  { id: "Emergency", icon: "🆘", label: "Emergency" },
+];
+const GOALS_LIST = [
+  { id: "1", icon: "📱", label: "Beli iPhone 15" },
+  { id: "2", icon: "💻", label: "Macbook Pro" },
+  { id: "3", icon: "🏍️", label: "Motor Baru" },
+  { id: "4", icon: "🏠", label: "DP Rumah" },
+  { id: "5", icon: "✈️", label: "Liburan Jepang" },
+  { id: "6", icon: "🎓", label: "S2" },
+  { id: "7", icon: "💍", label: "Nikah" },
+];
+
 // Komponen Select Kustom Neo-Brutalist
 function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText }: any) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const selected = options.find((o: any) => o.id === value);
+
+  const filteredOptions = options.filter((o: any) => 
+    o.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleClose = () => {
+    setOpen(false);
+    setTimeout(() => setSearchQuery(""), 200);
+  };
 
   return (
     <div className="flex flex-col gap-1.5 relative">
@@ -38,7 +60,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
       </label>
 
       {/* Overlay layar penuh untuk menutup dropdown ketika klik di luar */}
-      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)}></div>}
+      {open && <div className="fixed inset-0 z-10" onClick={handleClose}></div>}
 
       <button
         type="button"
@@ -54,18 +76,34 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
       </button>
 
       {open && (
-        <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[80] flex flex-col bg-white border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden max-h-56 overflow-y-auto animate-in zoom-in-95 duration-150 origin-bottom">
-          {options.map((o: any) => (
-            <button
-              type="button"
-              key={o.id}
-              onClick={() => { onChange(o.id); setOpen(false); }}
-              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${value === o.id ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"}`}
-            >
-              {o.icon && <span className="mr-2">{o.icon}</span>}
-              {o.label}
-            </button>
-          ))}
+        <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[80] flex flex-col bg-white border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden max-h-56 animate-in zoom-in-95 duration-150 origin-bottom">
+          {options.length > 5 && (
+            <div className="p-2 border-b-2 border-black bg-gray-50 shrink-0">
+              <input
+                type="text"
+                placeholder="Cari..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white border-2 border-black rounded-lg px-3 py-2 text-xs font-bold text-black outline-none shadow-[2px_2px_0_0_#000] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none transition-all"
+                autoFocus
+              />
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+            {filteredOptions.length > 0 ? filteredOptions.map((o: any) => (
+              <button
+                type="button"
+                key={o.id}
+                onClick={() => { onChange(o.id); handleClose(); }}
+                className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-b-0 ${value === o.id ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"}`}
+              >
+                {o.icon && <span className="mr-2">{o.icon}</span>}
+                {o.label}
+              </button>
+            )) : (
+              <div className="px-4 py-6 text-center text-xs font-bold text-gray-500">Tidak ada hasil</div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -76,6 +114,8 @@ export default function TambahTransaksi() {
   const router = useRouter();
 
   const [jenisTransaksi, setJenisTransaksi] = useState<boolean>(false); // false = pengeluaran, true = pemasukan
+  const [tipeTransaksi, setTipeTransaksi] = useState("Kebutuhan");
+  const [goals, setGoals] = useState("");
   const [nominal, setNominal] = useState("");
   const [judul, setJudul] = useState("");
   const [tanggal, setTanggal] = useState(new Date().toISOString().split("T")[0]);
@@ -222,6 +262,27 @@ export default function TambahTransaksi() {
               defaultText="Pilih Aset"
             />
           </div>
+
+          <CustomSelect
+            label="Jenis Transaksi"
+            icon={FiTag}
+            value={tipeTransaksi}
+            onChange={setTipeTransaksi}
+            options={JENIS_TRANSAKSI}
+            defaultText="Pilih Jenis Transaksi"
+          />
+
+          {/* Jika jenis transaksi yang dipilih goals, maka akan muncul option untuk memilih goals yang sudah ditambahkan */}
+          {tipeTransaksi === "Goals" && (
+            <CustomSelect
+              label="Goals"
+              icon={FiTag}
+              value={goals}
+              onChange={setGoals}
+              options={GOALS_LIST}
+              defaultText="Pilih Goals"
+            />
+          )}
 
           {/* Pemilihan Mood */}
           <div className="flex flex-col gap-1.5">
