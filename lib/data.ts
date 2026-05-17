@@ -336,7 +336,7 @@ export async function getDashboardData() {
 
     return {
       name: user?.name || "Kakak Cantik",
-      avatar: user?.avatar || "👦🏻",
+      avatar: user?.avatar,
       dompet: {
         saldo: `Rp ${formatNumber(totalSaldo)}`,
         pendapatan: `Rp ${formatNumber(totalPendapatanMonth)}`,

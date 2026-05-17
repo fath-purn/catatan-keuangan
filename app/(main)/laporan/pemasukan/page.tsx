@@ -2,7 +2,8 @@
 
 import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiTrendingUp } from "react-icons/fi";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getIncomeReport } from "@/lib/laporan-data";
 
 const ASET_LIST = [
   { id: "Cash", icon: "💵", label: "Cash" },
@@ -12,55 +13,68 @@ const ASET_LIST = [
   { id: "Gopay", icon: "📱", label: "Gopay" },
 ];
 
-const data = [
-  {
-    periode: "Mei 2026",
-    totalPemasukan: 8500000,
-    aset: [
-      { id: "BCA", total: 5000000 },
-      { id: "BNI", total: 2000000 },
-      { id: "Cash", total: 500000 },
-      { id: "OVO", total: 500000 },
-      { id: "Gopay", total: 500000 },
-    ]
-  },
-  {
-    periode: "April 2026",
-    totalPemasukan: 7000000,
-    aset: [
-      { id: "BCA", total: 4000000 },
-      { id: "BNI", total: 1000000 },
-      { id: "Cash", total: 1000000 },
-      { id: "OVO", total: 500000 },
-      { id: "Gopay", total: 500000 },
-    ]
-  }
-];
-
 export default function LaporanPemasukan() {
   const [monthOffset, setMonthOffset] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<{
+    periode: string;
+    totalPemasukan: number;
+    aset: { id: string; total: number }[];
+    hasOlderData: boolean;
+  } | null>(null);
 
-  const currentMonthData = data[Math.abs(monthOffset)] || data[0];
+  useEffect(() => {
+    setLoading(true);
+    getIncomeReport(monthOffset)
+      .then((data) => {
+        if (data) {
+          setReportData(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal memuat laporan pemasukan:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [monthOffset]);
+
+  if (loading && !reportData) {
+    return (
+      <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
+        <div className="w-16 h-16 border-8 border-black border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 font-black uppercase text-xs">Memuat Data Laporan...</p>
+      </div>
+    );
+  }
+
+  const currentMonthData = reportData || {
+    periode: "Memuat...",
+    totalPemasukan: 0,
+    aset: [],
+    hasOlderData: false,
+  };
+
   const totalPemasukan = currentMonthData.totalPemasukan;
-  
-  // Mencari nilai tertinggi untuk skala bar chart proporsional
-  const maxAset = Math.max(...currentMonthData.aset.map(a => a.total));
+  const maxAset = Math.max(...currentMonthData.aset.map(a => a.total)) || 1;
 
   // Array warna untuk pie chart
   const PIE_COLORS = ["#FF7676", "#FFB443", "#60D689", "#87CEFA", "#DBCBFF"];
 
   // Hitung persentase untuk Pie Chart (conic-gradient)
   let cumulativePercent = 0;
-  const pieGradientStops = currentMonthData.aset.map((ast, index) => {
+  const pieGradientStops = currentMonthData.aset.length > 0 ? currentMonthData.aset.map((ast, index) => {
     const persen = totalPemasukan > 0 ? (ast.total / totalPemasukan) * 100 : 0;
     const color = PIE_COLORS[index % PIE_COLORS.length];
     const start = cumulativePercent;
     const end = cumulativePercent + persen;
     cumulativePercent = end;
     return `${color} ${start}% ${end}%`;
-  }).join(", ");
+  }).join(", ") : "#E4E7EB 0% 100%";
 
-  const pieChartBackground = `conic-gradient(${pieGradientStops})`;
+  const pieChartBackground = totalPemasukan > 0 
+    ? `conic-gradient(${pieGradientStops})` 
+    : `conic-gradient(#E4E7EB 0% 100%)`;
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
@@ -80,8 +94,8 @@ export default function LaporanPemasukan() {
         <div className="flex justify-between items-center bg-white border-4 border-black rounded-2xl p-2 shadow-[4px_4px_0_0_#000]">
           <button
             onClick={() => setMonthOffset(monthOffset - 1)}
-            disabled={Math.abs(monthOffset - 1) >= data.length}
-            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${Math.abs(monthOffset - 1) >= data.length ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
+            disabled={loading || !currentMonthData.hasOlderData}
+            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || !currentMonthData.hasOlderData ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
           >
             <FiChevronLeft className="w-5 h-5" />
           </button>
@@ -97,8 +111,8 @@ export default function LaporanPemasukan() {
 
           <button
             onClick={() => setMonthOffset(monthOffset + 1)}
-            disabled={monthOffset === 0}
-            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${monthOffset === 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
+            disabled={loading || monthOffset === 0}
+            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || monthOffset === 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
           >
             <FiChevronRight className="w-5 h-5" />
           </button>
@@ -140,46 +154,51 @@ export default function LaporanPemasukan() {
            </h2>
 
            <div className="flex flex-col gap-6">
-              {currentMonthData.aset.map((ast, index) => {
-                 const info = ASET_LIST.find(a => a.id === ast.id);
-                 if(!info) return null;
-                 
-                 // PersenMax digunakan untuk panjang Bar
-                 const persenMax = maxAset > 0 ? (ast.total / maxAset) * 100 : 0;
-                 
-                 // PersenTotal digunakan untuk text informasi kontribusi (%)
-                 const persenTotal = totalPemasukan > 0 ? (ast.total / totalPemasukan) * 100 : 0;
+              {currentMonthData.aset.length === 0 ? (
+                <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
+                  Belum ada pemasukan di bulan ini
+                </div>
+              ) : (
+                currentMonthData.aset.map((ast, index) => {
+                   const info = ASET_LIST.find(a => a.id === ast.id) || { id: ast.id, icon: "💳", label: ast.id };
+                   
+                   // PersenMax digunakan untuk panjang Bar
+                   const persenMax = maxAset > 0 ? (ast.total / maxAset) * 100 : 0;
+                   
+                   // PersenTotal digunakan untuk text informasi kontribusi (%)
+                   const persenTotal = totalPemasukan > 0 ? (ast.total / totalPemasukan) * 100 : 0;
 
-                 const barColor = PIE_COLORS[index % PIE_COLORS.length];
+                   const barColor = PIE_COLORS[index % PIE_COLORS.length];
 
-                 return (
-                   <div key={ast.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
-                      <div className="flex justify-between items-center text-xs font-bold text-black">
-                         <div className="flex items-center gap-2">
-                            <span 
-                              className="border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]"
-                              style={{ backgroundColor: barColor }}
-                            >
-                              {info.icon}
-                            </span>
-                            <span className="uppercase">{info.label}</span>
-                         </div>
-                         <div className="flex flex-col items-end">
-                            <span>Rp {ast.total.toLocaleString('id-ID')}</span>
-                            <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% dari total</span>
-                         </div>
-                      </div>
-                      
-                      {/* Bar Horizontal Neo Brutalist */}
-                      <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
-                         <div 
-                           className="h-full border-r-2 border-black transition-all duration-500 ease-out" 
-                           style={{ width: `${Math.min(persenMax, 100)}%`, backgroundColor: barColor }}
-                         ></div>
-                      </div>
-                   </div>
-                 )
-              })}
+                   return (
+                     <div key={ast.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
+                        <div className="flex justify-between items-center text-xs font-bold text-black">
+                           <div className="flex items-center gap-2">
+                              <span 
+                                className="border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]"
+                                style={{ backgroundColor: barColor }}
+                              >
+                                {info.icon}
+                              </span>
+                              <span className="uppercase">{info.label}</span>
+                           </div>
+                           <div className="flex flex-col items-end">
+                              <span>Rp {ast.total.toLocaleString('id-ID')}</span>
+                              <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% dari total</span>
+                           </div>
+                        </div>
+                        
+                        {/* Bar Horizontal Neo Brutalist */}
+                        <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
+                           <div 
+                             className="h-full border-r-2 border-black transition-all duration-500 ease-out" 
+                             style={{ width: `${Math.min(persenMax, 100)}%`, backgroundColor: barColor }}
+                           ></div>
+                        </div>
+                     </div>
+                   )
+                })
+              )}
            </div>
         </div>
 

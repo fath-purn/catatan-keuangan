@@ -72,7 +72,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-24">
+    <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black ">
       {/* Header Sticky Neo-Brutalist */}
       <div className="bg-[#87CEFA] px-5 pt-8 pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20">
         <div className="w-10"></div>
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 
         {/* Section Edit & Info Profile */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0_0_#000] relative">
-          
+
           {error && (
             <div className="bg-[#FF7676] text-black border-2 border-black rounded-xl p-3.5 text-xs font-black shadow-[2px_2px_0_0_#000] mb-4 text-center">
               ⚠️ {error}
