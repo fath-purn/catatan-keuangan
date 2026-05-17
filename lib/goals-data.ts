@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 
 // Helper to format number to "1.250.000" style
 const formatNumber = (num: number) => {
@@ -138,4 +138,18 @@ export async function getGoalById(id: string) {
     return null;
   }
   return getCachedGoalById(session.user.id, id);
+}
+
+// REVALIDATE EXPORTS
+export async function revalidateGoals(id?: string) {
+  await revalidateTag("goals", "max");
+  await revalidateTag("dashboard", "max");
+
+  await revalidatePath("/goals");
+  await revalidatePath("/");
+  await revalidatePath("/transaksi");
+
+  if (id) {
+    await revalidatePath(`/goals/edit/${id}`);
+  }
 }

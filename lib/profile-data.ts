@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 
 const getCachedProfileData = unstable_cache(
   async (userId: string) => {
@@ -48,4 +48,14 @@ export async function getProfileData() {
     return null;
   }
   return getCachedProfileData(session.user.id);
+}
+
+// REVALIDATE EXPORTS
+export async function revalidateProfile() {
+  await revalidateTag("profile", "max");
+  await revalidateTag("dashboard", "max");
+
+  await revalidatePath("/profile");
+  await revalidatePath("/");
+  await revalidatePath("/laporan");
 }

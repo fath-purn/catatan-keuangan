@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { TransactionSchema } from "@/lib/zod";
 import { auth } from "@/auth";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidateTransactions } from "@/lib/data";
 
 export async function createTransactionAction(
   prevState: any,
@@ -93,14 +93,7 @@ export async function createTransactionAction(
       }
     });
 
-    revalidatePath("/transaksi");
-    revalidatePath("/");
-    revalidatePath("/laporan");
-    revalidatePath("/goals");
-    updateTag("transactions");
-    updateTag("dashboard");
-    updateTag("reports");
-    updateTag("goals");
+    await revalidateTransactions();
 
     return { success: true, message: "Transaksi berhasil disimpan." };
   } catch (error: any) {
@@ -246,14 +239,7 @@ export async function updateTransactionAction(
       }
     });
 
-    revalidatePath("/transaksi");
-    revalidatePath("/");
-    revalidatePath("/laporan");
-    revalidatePath("/goals");
-    updateTag("transactions");
-    updateTag("dashboard");
-    updateTag("reports");
-    updateTag("goals");
+    await revalidateTransactions();
 
     return { success: true, message: "Transaksi berhasil diperbarui." };
   } catch (error: any) {
@@ -304,14 +290,7 @@ export async function deleteTransactionAction(transactionId: string) {
       });
     });
 
-    revalidatePath("/transaksi");
-    revalidatePath("/");
-    revalidatePath("/laporan");
-    revalidatePath("/goals");
-    updateTag("transactions");
-    updateTag("dashboard");
-    updateTag("reports");
-    updateTag("goals");
+    await revalidateTransactions();
 
     return { success: true, message: "Transaksi berhasil dihapus." };
   } catch (error) {

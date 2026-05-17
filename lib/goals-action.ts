@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { GoalSchema } from "@/lib/zod";
 import { auth } from "@/auth";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidateGoals } from "@/lib/goals-data";
 
 export async function createGoalAction(prevState: any, formData: FormData) {
   const session = await auth();
@@ -52,11 +52,7 @@ export async function createGoalAction(prevState: any, formData: FormData) {
       },
     });
 
-    revalidatePath("/goals");
-    revalidatePath("/");
-    revalidatePath("/transaksi");
-    updateTag("goals");
-    updateTag("dashboard");
+    await revalidateGoals();
 
     return { success: true, message: "Goal berhasil disimpan." };
   } catch (error) {
@@ -124,11 +120,7 @@ export async function updateGoalAction(prevState: any, formData: FormData) {
       },
     });
 
-    revalidatePath("/goals");
-    revalidatePath("/");
-    revalidatePath("/transaksi");
-    updateTag("goals");
-    updateTag("dashboard");
+    await revalidateGoals(goalId);
 
     return { success: true, message: "Goal berhasil diperbarui." };
   } catch (error) {
@@ -158,11 +150,7 @@ export async function deleteGoalAction(goalId: string) {
       where: { id: goalId },
     });
 
-    revalidatePath("/goals");
-    revalidatePath("/");
-    revalidatePath("/transaksi");
-    updateTag("goals");
-    updateTag("dashboard");
+    await revalidateGoals(goalId);
 
     return { success: true, message: "Goal berhasil dihapus." };
   } catch (error) {

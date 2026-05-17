@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { startOfMonth, endOfMonth, subDays } from "date-fns";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 
 const indonesianDays = [
   "Minggu",
@@ -334,7 +334,10 @@ const getCachedDashboardData = unstable_cache(
       }
 
       // 5. Get latest grouped transactions
-      const recentTransactionsGrouped = await getTransactionsData();
+      const recentTransactionsGrouped = await getCachedTransactionsData(
+        userId,
+        JSON.stringify({}),
+      );
 
       return {
         name: user?.name || "Kakak Cantik",
@@ -386,4 +389,17 @@ export async function getDashboardData() {
     };
   }
   return getCachedDashboardData(session.user.id);
+}
+
+// REVALIDATE EXPORTS
+export async function revalidateTransactions() {
+  await revalidateTag("transactions", "max");
+  await revalidateTag("dashboard", "max");
+  await revalidateTag("reports", "max");
+  await revalidateTag("goals", "max");
+
+  await revalidatePath("/transaksi");
+  await revalidatePath("/");
+  await revalidatePath("/laporan");
+  await revalidatePath("/goals");
 }
