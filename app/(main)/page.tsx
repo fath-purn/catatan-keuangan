@@ -3,6 +3,7 @@ import { IoWalletOutline } from "react-icons/io5";
 import Link from "next/link";
 import { getDashboardData } from "@/lib/data";
 import LastTransactionClient from "@/components/last-transaction-client";
+import NotificationCenter from "@/components/notification-center";
 import DashboardLoading from "./loading";
 
 export default function Home() {
@@ -25,8 +26,11 @@ async function DashboardContent() {
             <span className="text-xs font-bold uppercase tracking-wider text-black drop-shadow-sm">Halo,</span>
             <h1 className="text-2xl font-black drop-shadow-md">{data.name}! 👋</h1>
           </div>
-          <div className="w-12 h-12 bg-[#DBCBFF] border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden flex items-center justify-center text-2xl">
-            {data.avatar}
+          <div className="flex items-center gap-3">
+            <NotificationCenter notifications={data.notifications || []} />
+            <div className="w-12 h-12 bg-[#DBCBFF] border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] overflow-hidden flex items-center justify-center text-2xl">
+              {data.avatar}
+            </div>
           </div>
         </div>
       </div>

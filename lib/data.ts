@@ -339,6 +339,58 @@ const getCachedDashboardData = unstable_cache(
         JSON.stringify({}),
       );
 
+      // 6. Dynamic Smart Notifications
+      const notifications = [];
+      const limitGayaHidup = user?.targetGayaHidup || 5000000;
+      const persenPengeluaran =
+        limitGayaHidup > 0 ? (totalPengeluaranMonth / limitGayaHidup) * 100 : 0;
+
+      if (persenPengeluaran >= 100) {
+        notifications.push({
+          id: "overspending-critical",
+          title: "⚠️ Limit Jebol!",
+          message: `Waduh! Pengeluaran bulananmu (Rp ${formatNumber(totalPengeluaranMonth)}) sudah MELEBIHI target gaya hidupmu (Rp ${formatNumber(limitGayaHidup)}). Yuk, stop jajan impulsif! 💸`,
+          type: "danger",
+        });
+      } else if (persenPengeluaran >= 80) {
+        notifications.push({
+          id: "overspending-warning",
+          title: "⚠️ Peringatan Pengeluaran!",
+          message: `Awas! Pengeluaranmu sudah mencapai ${Math.round(persenPengeluaran)}% dari target gaya hidup (Rp ${formatNumber(totalPengeluaranMonth)} / Rp ${formatNumber(limitGayaHidup)}). Hemat-hemat ya! 🛒`,
+          type: "warning",
+        });
+      }
+
+      if (latestGoal) {
+        const persenGoal =
+          latestGoal.target > 0
+            ? (latestGoal.terkumpul / latestGoal.target) * 100
+            : 0;
+        if (persenGoal >= 100) {
+          notifications.push({
+            id: `goal-complete-${latestGoal.id}`,
+            title: "🎯 Goal Tercapai!",
+            message: `Selamat! Tabungan untuk target "${latestGoal.nama}" sudah terkumpul 100%! Impianmu resmi tercapai! 🥳`,
+            type: "success",
+          });
+        } else if (persenGoal >= 85) {
+          notifications.push({
+            id: `goal-close-${latestGoal.id}`,
+            title: "🎯 Hampir Tercapai!",
+            message: `Keren! Tabungan "${latestGoal.nama}" sudah mencapai ${Math.round(persenGoal)}% terkumpul. Tinggal sedikit lagi! 💪`,
+            type: "info",
+          });
+        }
+      }
+
+      notifications.push({
+        id: "daily-tip",
+        title: "💡 Tips Keuangan Cerdas",
+        message:
+          "Catat setiap pengeluaran kecil (seperti parkir & uang receh) agar keuanganmu lebih transparan dan terkontrol! 📝",
+        type: "tip",
+      });
+
       return {
         name: user?.name || "Kakak Cantik",
         avatar: user?.avatar,
@@ -350,6 +402,7 @@ const getCachedDashboardData = unstable_cache(
         },
         goals: goalData,
         transaksi: recentTransactionsGrouped.slice(0, 3), // return up to 3 date groups
+        notifications,
       };
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -364,6 +417,7 @@ const getCachedDashboardData = unstable_cache(
         },
         goals: null,
         transaksi: [],
+        notifications: [],
       };
     }
   },
@@ -386,6 +440,7 @@ export async function getDashboardData() {
       },
       goals: null,
       transaksi: [],
+      notifications: [],
     };
   }
   return getCachedDashboardData(session.user.id);
