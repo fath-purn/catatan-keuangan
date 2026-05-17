@@ -19,6 +19,16 @@ export default function NotificationCenter({ notifications }: NotificationCenter
   const [readIds, setReadIds] = useState<string[]>([]);
   const [permission, setPermission] = useState<string>("default");
 
+  // Register Service Worker on mount for mobile push notification support
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => console.log("Service Worker registered:", reg.scope))
+        .catch((err) => console.error("Service Worker registration failed:", err));
+    }
+  }, []);
+
   // Read state management from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,6 +44,33 @@ export default function NotificationCenter({ notifications }: NotificationCenter
     }
   }, []);
 
+  // Helper to trigger native notification (works on both mobile and desktop)
+  const triggerNativeNotification = async (title: string, body: string) => {
+    const options = {
+      body,
+      icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF7676'/><text x='15' y='70' font-size='60'>🎯</text></svg>",
+      badge: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF7676'/><text x='15' y='70' font-size='60'>🎯</text></svg>",
+    };
+
+    if ("serviceWorker" in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && "showNotification" in reg) {
+          reg.showNotification(title, options);
+          return;
+        }
+      } catch (err) {
+        console.error("SW notification failed, falling back to window.Notification:", err);
+      }
+    }
+
+    try {
+      new Notification(title, options);
+    } catch (err) {
+      console.error("Failed to construct Notification object:", err);
+    }
+  };
+
   // Handle native push notifications for un-pushed items
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window && permission === "granted" && notifications.length > 0) {
@@ -44,17 +81,9 @@ export default function NotificationCenter({ notifications }: NotificationCenter
       notifications.forEach((n) => {
         // We only push system notifications for warning/danger/success messages, not general tips
         if (n.type !== "tip" && !pushedIds.includes(n.id)) {
-          try {
-            // Trigger phone / desktop native notification bar
-            new Notification(n.title, {
-              body: n.message,
-              icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF7676'/><text x='15' y='70' font-size='60'>🎯</text></svg>",
-            });
-            pushedIds.push(n.id);
-            updated = true;
-          } catch (err) {
-            console.error("Failed to show native notification:", err);
-          }
+          triggerNativeNotification(n.title, n.message);
+          pushedIds.push(n.id);
+          updated = true;
         }
       });
 
@@ -70,9 +99,10 @@ export default function NotificationCenter({ notifications }: NotificationCenter
       const result = await Notification.requestPermission();
       setPermission(result);
       if (result === "granted") {
-        new Notification("Notifikasi Aktif! 🔔", {
-          body: "Hebat! Sekarang kamu akan menerima peringatan limit gaya hidup dan progres goals langsung di HP/Desktop-mu!",
-        });
+        triggerNativeNotification(
+          "Notifikasi Aktif! 🔔",
+          "Hebat! Sekarang kamu akan menerima peringatan limit gaya hidup dan progres goals langsung di HP/Desktop-mu!"
+        );
       }
     } else {
       alert("Browser Anda tidak mendukung notifikasi sistem.");
