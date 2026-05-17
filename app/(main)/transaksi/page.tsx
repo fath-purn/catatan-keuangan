@@ -44,14 +44,6 @@ export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
         </Suspense>
       </div>
 
-      {/* Floating Action Button untuk Tambah Transaksi */}
-      <Link
-        href="/transaksi/tambah"
-        className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-[#E4F087] border-4 border-black rounded-full flex items-center justify-center shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none"
-      >
-        <FiPlus className="w-8 h-8 text-black stroke-[3]" />
-      </Link>
-
       <div className="container mx-auto px-4 mt-8 flex flex-col gap-6">
 
         {/* Filter Card */}
