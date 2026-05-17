@@ -111,11 +111,14 @@ export default function NotificationCenter({ notifications }: NotificationCenter
       {/* Popover / Overlay Drawer */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-40 bg-black/40" onClick={toggleOpen} />
+          {/* Backdrop (Centered Modal style with blur and high z-index) */}
+          <div
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in"
+            onClick={toggleOpen}
+          />
 
-          {/* Neo-Brutalist Drawer Container */}
-          <div className="absolute right-0 mt-3 w-[340px] max-w-[calc(100vw-32px)] bg-[#FDF8EE] border-4 border-black rounded-2xl shadow-[8px_8px_0_0_#000] z-50 overflow-hidden flex flex-col transition-all animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Neo-Brutalist Modal Container (Centered, heavy shadows, high z-index) */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] max-w-[calc(100vw-32px)] bg-[#FDF8EE] border-4 border-black rounded-3xl shadow-[8px_8px_0_0_#000,0_20px_50px_rgba(0,0,0,0.3)] z-[101] overflow-hidden flex flex-col transition-all transform scale-100 animate-in zoom-in-95 duration-200">
             {/* Header Popover */}
             <div className="bg-[#DBCBFF] p-4 border-b-4 border-black flex justify-between items-center">
               <div className="flex flex-col">
