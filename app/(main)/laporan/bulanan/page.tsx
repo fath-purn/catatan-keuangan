@@ -3,7 +3,7 @@
 import { FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { getMonthlyReport } from "@/lib/laporan-data";
+import { getMonthlyReport, getMonthlyTransactionsForExport } from "@/lib/laporan-data";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -17,6 +17,7 @@ const KATEGORI_LIST = [
 export default function LaporanBulanan() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [reportData, setReportData] = useState<{
     periode: string;
     totalPengeluaran: number;
@@ -41,6 +42,51 @@ export default function LaporanBulanan() {
         setLoading(false);
       });
   }, [monthOffset]);
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const data = await getMonthlyTransactionsForExport(monthOffset);
+      if (!data || data.length === 0) {
+        alert("Tidak ada transaksi untuk diekspor pada bulan ini.");
+        return;
+      }
+
+      // Construct CSV string with UTF-8 BOM to support Indonesian Excel compatibility
+      const headers = ["Tanggal", "Judul", "Jenis", "Kategori", "Aset", "Nominal", "Keperluan", "Mood"];
+      const csvRows = [headers.join(",")];
+
+      for (const row of data) {
+        const values = [
+          row.tanggal,
+          `"${row.judul.replace(/"/g, '""')}"`,
+          row.jenis,
+          row.kategori,
+          row.aset,
+          row.nominal,
+          row.keperluan,
+          row.mood
+        ];
+        csvRows.push(values.join(","));
+      }
+
+      const csvContent = "\uFEFF" + csvRows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Laporan_Keuangan_${currentMonthData.periode.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Gagal mengekspor CSV:", err);
+      alert("Terjadi kesalahan saat mengekspor laporan.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading && !reportData) {
     return (
@@ -110,6 +156,24 @@ export default function LaporanBulanan() {
             <FiChevronRight className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Tombol Export Laporan Bulanan */}
+        <button
+          onClick={handleExportCSV}
+          disabled={exporting || loading}
+          className="w-full bg-[#87CEFA] border-4 border-black rounded-2xl p-4 font-black uppercase text-xs shadow-[4px_4px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0_0_#000] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {exporting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+              Mengekspor Laporan...
+            </>
+          ) : (
+            <>
+              📥 Export Laporan Lengkap (.CSV)
+            </>
+          )}
+        </button>
 
         {/* Ringkasan */}
         <div className="grid grid-cols-2 gap-4">

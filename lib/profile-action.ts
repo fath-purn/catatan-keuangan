@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { ProfileSchema } from "@/lib/zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export async function updateProfileAction(prevState: any, formData: FormData) {
   const session = await auth();
@@ -48,6 +48,8 @@ export async function updateProfileAction(prevState: any, formData: FormData) {
     revalidatePath("/profile");
     revalidatePath("/");
     revalidatePath("/laporan");
+    updateTag("profile");
+    updateTag("dashboard");
 
     return { success: true, message: "Profile berhasil disimpan." };
   } catch (error) {
