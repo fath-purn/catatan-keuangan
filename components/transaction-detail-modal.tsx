@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { FiX, FiClock, FiTag, FiCreditCard, FiSmile, FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { FiX, FiClock, FiTag, FiCreditCard, FiSmile, FiEdit2, FiTrash2, FiChevronDown, FiCalendar } from "react-icons/fi";
+import { updateTransactionAction, deleteTransactionAction } from "@/lib/action";
+import { getUserGoals } from "@/lib/data";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -20,7 +22,8 @@ const ASET_LIST = [
   { id: "Gopay", icon: "📱", label: "Gopay" },
 ];
 
-const JENIS_TRANSAKSI = [
+const KEPERLUAN_OPTIONS = [
+  { id: "Goals", icon: "🎯", label: "Goals" },
   { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
   { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
   { id: "Emergency", icon: "🆘", label: "Emergency" },
@@ -28,7 +31,7 @@ const JENIS_TRANSAKSI = [
 
 function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText }: any) {
   const [open, setOpen] = useState(false);
-  const selected = options.find((o: any) => o.label === value || o.id === value);
+  const selected = options.find((o: any) => o.id === value || o.label === value);
 
   return (
     <div className="flex flex-col gap-1.5 relative">
@@ -50,8 +53,8 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
             <button
               type="button"
               key={o.id}
-              onClick={() => { onChange(o.label); setOpen(false); }}
-              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${value === o.label ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"}`}
+              onClick={() => { onChange(o.id); setOpen(false); }}
+              className={`text-left px-4 py-3 text-xs font-bold transition-colors border-b-2 border-black last:border-0 ${value === o.id || value === o.label ? "bg-black text-[#E4F087]" : "text-black hover:bg-gray-100"}`}
             >
               {o.icon && <span className="mr-2">{o.icon}</span>} {o.label}
             </button>
@@ -63,31 +66,111 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
 }
 
 export default function TransactionDetailModal({ isOpen, onClose, transaction }: any) {
-  if (!isOpen || !transaction) return null;
+  const [availableGoals, setAvailableGoals] = useState<any[]>([]);
+  const [isPending, setIsPending] = useState(false);
 
-  const [jenis, setJenis] = useState(transaction.jenis);
-  const [nominal, setNominal] = useState(transaction.nominal);
-  const [waktu, setWaktu] = useState(transaction.waktu);
-  const [kategori, setKategori] = useState(transaction.kategori);
-  const [aset, setAset] = useState(transaction.aset);
-  const [mood, setMood] = useState(transaction.mood);
-  const [keperluan, setKeperluan] = useState(transaction.keperluan);
-  const [jenisTrx, setJenisTrx] = useState(transaction.jenis_transaksi); // true = pemasukan
+  const [jenis, setJenis] = useState("");
+  const [nominal, setNominal] = useState("");
+  const [tanggal, setTanggal] = useState("");
+  const [waktu, setWaktu] = useState("");
+  const [kategori, setKategori] = useState("");
+  const [aset, setAset] = useState("");
+  const [mood, setMood] = useState("");
+  const [keperluan, setKeperluan] = useState("");
+  const [jenisTrx, setJenisTrx] = useState(false); // true = pemasukan
+  const [goalId, setGoalId] = useState("");
+
+  // Load goals
+  useEffect(() => {
+    async function loadGoals() {
+      try {
+        const goals = await getUserGoals();
+        setAvailableGoals(goals);
+      } catch (err) {
+        console.error("Gagal mengambil goals:", err);
+      }
+    }
+    if (isOpen) {
+      loadGoals();
+    }
+  }, [isOpen]);
+
+  // Sync state dengan transaction prop yang terpilih
+  useEffect(() => {
+    if (transaction) {
+      setJenis(transaction.jenis || "");
+      setNominal(transaction.nominal || "");
+      setTanggal(transaction.tanggalRaw || "");
+      setWaktu(transaction.waktu || "");
+      setKategori(transaction.kategori || "");
+      setAset(transaction.aset || "");
+      setMood(transaction.mood || "Biasa");
+      setKeperluan(transaction.keperluan || "Kebutuhan");
+      setJenisTrx(transaction.jenis_transaksi || false);
+      setGoalId(transaction.goalId || "");
+    }
+  }, [transaction]);
+
+  if (!isOpen || !transaction) return null;
 
   // Cek apakah ada data yang diedit
   const isChanged =
     jenis !== transaction.jenis ||
     nominal !== transaction.nominal ||
+    tanggal !== transaction.tanggalRaw ||
     waktu !== transaction.waktu ||
     kategori !== transaction.kategori ||
     aset !== transaction.aset ||
     mood !== transaction.mood ||
-    jenisTrx !== transaction.jenis_transaksi;
+    keperluan !== transaction.keperluan ||
+    jenisTrx !== transaction.jenis_transaksi ||
+    goalId !== (transaction.goalId || "");
 
   const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
     if (val) setNominal(parseInt(val, 10).toLocaleString('id-ID').replace(/,/g, '.'));
     else setNominal("");
+  };
+
+  const handleSave = async () => {
+    setIsPending(true);
+    try {
+      const formData = new FormData();
+      formData.append("id", transaction.id);
+      formData.append("jenis_transaksi", String(jenisTrx));
+      formData.append("nominal", nominal);
+      formData.append("judul", jenis);
+      formData.append("kategori", kategori);
+      formData.append("aset", aset);
+      formData.append("keperluan", keperluan);
+      formData.append("tanggal", tanggal);
+      formData.append("waktu", waktu);
+      formData.append("mood", mood);
+      if (keperluan === "Goals" && goalId) {
+        formData.append("goalId", goalId);
+      }
+
+      const res = await updateTransactionAction(null, formData);
+      if (res.success) {
+        onClose();
+      }
+    } catch (err) {
+      console.error("Error updating transaction:", err);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsPending(true);
+    try {
+      await deleteTransactionAction(transaction.id);
+      onClose();
+    } catch (err) {
+      console.error("Error deleting transaction:", err);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -97,20 +180,19 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
 
         {/* Handle bar & Header */}
         <div className="shrink-0 flex flex-col">
-          {/* <div className="w-12 h-2 bg-black rounded-full mx-auto mb-4"></div> */}
           <div className="flex items-center justify-between">
             <h3 className="font-black text-black text-xl uppercase">Detail Transaksi</h3>
-            <button onClick={onClose} className="p-2 bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform">
+            <button onClick={onClose} disabled={isPending} className="p-2 bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform disabled:opacity-50">
               <FiX className="w-5 h-5 text-black font-bold" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-6 pb-4 px-1">
+        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-6 pb-20 px-1">
           {/* Toggle Pemasukan / Pengeluaran */}
           <div className="flex bg-white gap-2 border-2 border-black p-1.5 rounded-2xl shadow-[4px_4px_0_0_#000] shrink-0">
-            <button type="button" onClick={() => setJenisTrx(false)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${!jenisTrx ? "bg-[#FF7676] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PENGELUARAN</button>
-            <button type="button" onClick={() => setJenisTrx(true)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${jenisTrx ? "bg-[#60D689] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PEMASUKAN</button>
+            <button type="button" disabled={isPending} onClick={() => setJenisTrx(false)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${!jenisTrx ? "bg-[#FF7676] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PENGELUARAN</button>
+            <button type="button" disabled={isPending} onClick={() => setJenisTrx(true)} className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${jenisTrx ? "bg-[#60D689] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}>PEMASUKAN</button>
           </div>
 
           {/* Nominal */}
@@ -118,7 +200,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             <p className="text-[10px] font-bold mb-2 uppercase tracking-wider text-black">Nominal</p>
             <div className="flex items-center justify-center w-full bg-white border-4 border-black rounded-[32px] py-6 px-4 shadow-[8px_8px_0_0_#000]">
               <span className="text-3xl font-black mr-2 text-black">Rp</span>
-              <input type="text" inputMode="numeric" value={nominal} onChange={handleNominalChange} className="bg-transparent border-none outline-none text-4xl font-black text-black w-full text-center p-0" />
+              <input type="text" disabled={isPending} inputMode="numeric" value={nominal} onChange={handleNominalChange} className="bg-transparent border-none outline-none text-4xl font-black text-black w-full text-center p-0 disabled:opacity-50" />
             </div>
           </div>
 
@@ -127,7 +209,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
               <FiEdit2 className="w-3 h-3" /> Keterangan
             </label>
-            <input type="text" value={jenis} onChange={e => setJenis(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none" />
+            <input type="text" disabled={isPending} value={jenis} onChange={e => setJenis(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none disabled:opacity-50" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -140,50 +222,72 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
             icon={FiTag}
             value={keperluan}
             onChange={setKeperluan}
-            options={JENIS_TRANSAKSI}
+            options={KEPERLUAN_OPTIONS}
             defaultText="Pilih Jenis Transaksi"
           />
 
+          {keperluan === "Goals" && (
+            <CustomSelect
+              label="Goals"
+              icon={FiTag}
+              value={goalId}
+              onChange={setGoalId}
+              options={availableGoals}
+              defaultText="Pilih Goals"
+            />
+          )}
+
           <div className="grid grid-cols-2 gap-4">
+            {/* Tanggal */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
+                <FiCalendar className="w-3 h-3" /> Tanggal
+              </label>
+              <input type="date" disabled={isPending} value={tanggal} onChange={e => setTanggal(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none disabled:opacity-50" />
+            </div>
             {/* Waktu */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1"><FiClock className="w-3 h-3" /> Waktu</label>
-              <input type="time" value={waktu} onChange={e => setWaktu(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none" />
-            </div>
-            {/* Mood */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1"><FiSmile className="w-3 h-3" /> Mood</label>
-              <div className="relative">
-                <select
-                  value={mood}
-                  onChange={e => setMood(e.target.value)}
-                  className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none appearance-none"
-                >
-                  <option value="Senang">😊 Senang</option>
-                  <option value="Biasa">😐 Biasa</option>
-                  <option value="Sedih">😢 Sedih</option>
-                  <option value="Marah">😡 Marah</option>
-                </select>
-                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black font-bold pointer-events-none" />
-              </div>
+              <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
+                <FiClock className="w-3 h-3" /> Waktu
+              </label>
+              <input type="time" disabled={isPending} value={waktu} onChange={e => setWaktu(e.target.value)} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none disabled:opacity-50" />
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 shrink-0">
-          <button onClick={() => { alert('Transaksi berhasil dihapus'); onClose(); }} className="flex items-center justify-center px-5 py-4 bg-[#FF7676] text-black border-4 border-black font-bold rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-red-400 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none" title="Hapus">
-            <FiTrash2 className="w-6 h-6" />
-          </button>
-          {isChanged ? (
-            <button onClick={() => { alert('Perubahan disimpan!'); onClose(); }} className="flex-1 py-4 bg-[#E4F087] text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none">
-              Simpan Perubahan
+          {/* Mood */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1"><FiSmile className="w-3 h-3" /> Mood</label>
+            <div className="relative">
+              <select
+                disabled={isPending}
+                value={mood}
+                onChange={e => setMood(e.target.value)}
+                className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none appearance-none disabled:opacity-50"
+              >
+                <option value="Senang">😊 Senang</option>
+                <option value="Biasa">😐 Biasa</option>
+                <option value="Sedih">😢 Sedih</option>
+                <option value="Marah">😡 Marah</option>
+              </select>
+              <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black font-bold pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 shrink-0">
+            <button onClick={handleDelete} disabled={isPending} className="flex items-center justify-center px-5 py-4 bg-[#FF7676] text-black border-4 border-black font-bold rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-red-400 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50" title="Hapus">
+              <FiTrash2 className="w-6 h-6" />
             </button>
-          ) : (
-            <button onClick={onClose} className="flex-1 py-4 bg-white text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-gray-100 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none">
-              Tutup
-            </button>
-          )}
+            {isChanged ? (
+              <button onClick={handleSave} disabled={isPending} className="flex-1 py-4 bg-[#E4F087] text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50">
+                {isPending ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            ) : (
+              <button onClick={onClose} disabled={isPending} className="flex-1 py-4 bg-white text-black border-4 border-black font-black uppercase text-sm rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-gray-100 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50">
+                Tutup
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

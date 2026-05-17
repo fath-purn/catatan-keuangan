@@ -1,120 +1,252 @@
-// "use server";
+"use server";
 
-// import { SuratSchema } from "@/lib/zod";
-// import { FormStateSurat } from "@/types/props";
+import { prisma } from "@/lib/prisma";
+import { TransactionSchema } from "@/lib/zod";
+import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
-// const SCRIPT_URL =
-//   "https://script.google.com/macros/s/AKfycby3sss__lqSdj5_aq2NZvjzztHBnBnIWayPJibk8mBHTrknxeokrnP0-B3KCDoVoLQ/exec";
+export async function createTransactionAction(prevState: any, formData: FormData) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return { success: false, message: "User tidak terautentikasi." };
+  }
 
-// const submitSuratOnlineInternal = async (
-//   formData: FormData,
-// ): Promise<FormStateSurat | "success"> => {
-//   const rawData = {
-//     jenisSurat: formData.get("jenisSurat"),
-//     nik: formData.get("nik"),
-//     nama: formData.get("nama"),
-//     noHp: formData.get("noHp"),
-//     rt: formData.get("rt"),
-//     rw: formData.get("rw"),
-//     keperluan: formData.get("keperluan"),
-//   };
+  const userId = session.user.id;
 
-//   const validateFields = SuratSchema.safeParse(rawData);
-//   if (!validateFields.success) {
-//     return { error: validateFields.error.flatten().fieldErrors as any };
-//   }
+  // Bersihkan nominal string (misal: "3.000.000" -> "3000000")
+  const rawNominal = formData.get("nominal") as string;
+  const cleanedNominal = rawNominal ? rawNominal.replace(/[^0-9]/g, "") : "";
 
-//   try {
-//     const response = await fetch(SCRIPT_URL, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(validateFields.data),
-//     });
+  const rawData = {
+    nominal: cleanedNominal,
+    judul: formData.get("judul"),
+    tanggal: formData.get("tanggal"),
+    waktu: formData.get("waktu"),
+    kategori: formData.get("kategori"),
+    aset: formData.get("aset"),
+    mood: formData.get("mood") || "Biasa",
+    keperluan: formData.get("keperluan"),
+    jenis_transaksi: formData.get("jenis_transaksi"),
+    goalId: formData.get("goalId") || null,
+  };
 
-//     if (!response.ok) {
-//       throw new Error("Gagal mengirim data ke server.");
-//     }
+  const validatedFields = TransactionSchema.safeParse(rawData);
 
-//     return "success";
-//   } catch (err) {
-//     console.error(err);
-//     return { message: "Gagal memproses permohonan. Terjadi kesalahan server." };
-//   }
-// };
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      error: validatedFields.error.flatten().fieldErrors,
+      message: "Data tidak valid. Periksa kembali form Anda.",
+    };
+  }
 
-// export const submitSuratOnline = async (
-//   prevState: FormStateSurat | null,
-//   formData: FormData,
-// ): Promise<FormStateSurat> => {
-//   const result = await submitSuratOnlineInternal(formData);
+  const data = validatedFields.data;
 
-//   if (result === "success") {
-//     return { message: "Permohonan surat berhasil dikirim." };
-//   }
+  try {
+    // Lakukan pembuatan transaksi dan update tabungan pada Goal jika goalId disertakan
+    await prisma.$transaction(async (tx) => {
+      await tx.transaction.create({
+        data: {
+          nominal: data.nominal,
+          judul: data.judul,
+          tanggal: data.tanggal,
+          waktu: data.waktu,
+          kategori: data.kategori,
+          aset: data.aset,
+          mood: data.mood,
+          keperluan: data.keperluan,
+          jenis_transaksi: data.jenis_transaksi,
+          userId,
+          goalId: data.goalId || null,
+        },
+      });
 
-//   return result;
-// };
+      // Jika ada target goals yang terhubung, update "terkumpul" di tabel Goal
+      if (data.goalId) {
+        const goal = await tx.goal.findUnique({
+          where: { id: data.goalId },
+        });
 
-// import { prisma } from "@/lib/prisma";
-// import { revalidateComplaint } from "@/lib/data";
-// import { ComplaintSchema } from "@/lib/zod";
+        if (goal) {
+          // Jika jenis_transaksi = false (Pengeluaran/menabung ke goal): menambah nominal terkumpul
+          // Jika jenis_transaksi = true (Pemasukan/penarikan dari goal): mengurangi nominal terkumpul
+          const adjustment = data.jenis_transaksi ? -data.nominal : data.nominal;
+          await tx.goal.update({
+            where: { id: data.goalId },
+            data: {
+              terkumpul: {
+                increment: adjustment,
+              },
+            },
+          });
+        }
+      }
+    });
 
-// export async function submitPengaduan(prevState: any, formData: FormData) {
-//   const validatedFields = ComplaintSchema.safeParse({
-//     name: formData.get("name"),
-//     phone: formData.get("phone"),
-//     category: formData.get("category"),
-//     title: formData.get("title"),
-//     content: formData.get("content"),
-//     imageUrl: formData.get("imageUrl") || undefined,
-//   });
+    revalidatePath("/transaksi");
+    revalidatePath("/");
+    revalidatePath("/laporan");
+    revalidatePath("/goals");
 
-//   if (!validatedFields.success) {
-//     return {
-//       success: false,
-//       error: "Data tidak valid",
-//       message: "Gagal mengirim pengaduan. Periksa kembali form Anda.",
-//       fields: validatedFields.error.flatten().fieldErrors,
-//     };
-//   }
+    return { success: true, message: "Transaksi berhasil disimpan." };
+  } catch (error) {
+    console.error("Create transaction error:", error);
+    return { success: false, message: "Gagal menyimpan transaksi." };
+  }
+}
 
-//   const { title, content, ...rest } = validatedFields.data;
+export async function updateTransactionAction(prevState: any, formData: FormData) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return { success: false, message: "User tidak terautentikasi." };
+  }
 
-//   try {
-//     // Save to Database - combining title into content as schema doesn't have title field
-//     await prisma.complaint.create({
-//       data: {
-//         ...rest,
-//         content: `[${title}] ${content}`,
-//       },
-//     });
+  const userId = session.user.id;
+  const transactionId = formData.get("id") as string;
+  if (!transactionId) {
+    return { success: false, message: "ID transaksi tidak valid." };
+  }
 
-//     // Optional: Keep sending to Google Script if needed
-//     try {
-//       await fetch(SCRIPT_URL, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           ...validatedFields.data,
-//           type: "PENGADUAN",
-//         }),
-//       });
-//     } catch (err) {
-//       console.warn("Failed to send to Google Script, but saved to DB:", err);
-//     }
+  // Bersihkan nominal string (misal: "3.000.000" -> "3000000")
+  const rawNominal = formData.get("nominal") as string;
+  const cleanedNominal = rawNominal ? rawNominal.replace(/[^0-9]/g, "") : "";
 
-//     revalidateComplaint();
-//     return { success: true, message: "Pengaduan berhasil dikirim." };
-//   } catch (error) {
-//     console.error("Server Action Error:", error);
-//     return {
-//       success: false,
-//       error: "Gagal memproses pengaduan.",
-//       message: "Terjadi kesalahan pada server.",
-//     };
-//   }
-// }
+  const rawData = {
+    nominal: cleanedNominal,
+    judul: formData.get("judul"),
+    tanggal: formData.get("tanggal"),
+    waktu: formData.get("waktu"),
+    kategori: formData.get("kategori"),
+    aset: formData.get("aset"),
+    mood: formData.get("mood") || "Biasa",
+    keperluan: formData.get("keperluan"),
+    jenis_transaksi: formData.get("jenis_transaksi"),
+    goalId: formData.get("goalId") || null,
+  };
+
+  const validatedFields = TransactionSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      error: validatedFields.error.flatten().fieldErrors,
+      message: "Data tidak valid. Periksa kembali form Anda.",
+    };
+  }
+
+  const data = validatedFields.data;
+
+  try {
+    const existingTx = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!existingTx || existingTx.userId !== userId) {
+      return { success: false, message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Revert nominal terkumpul dari Goal yang lama
+      if (existingTx.goalId) {
+        const oldAdjustment = existingTx.jenis_transaksi ? -existingTx.nominal : existingTx.nominal;
+        await tx.goal.update({
+          where: { id: existingTx.goalId },
+          data: {
+            terkumpul: {
+              decrement: oldAdjustment,
+            },
+          },
+        });
+      }
+
+      // 2. Update data transaksi
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          nominal: data.nominal,
+          judul: data.judul,
+          tanggal: data.tanggal,
+          waktu: data.waktu,
+          kategori: data.kategori,
+          aset: data.aset,
+          mood: data.mood,
+          keperluan: data.keperluan,
+          jenis_transaksi: data.jenis_transaksi,
+          goalId: data.goalId || null,
+        },
+      });
+
+      // 3. Tambahkan nominal terkumpul ke Goal yang baru jika ada
+      if (data.goalId) {
+        const newAdjustment = data.jenis_transaksi ? -data.nominal : data.nominal;
+        await tx.goal.update({
+          where: { id: data.goalId },
+          data: {
+            terkumpul: {
+              increment: newAdjustment,
+            },
+          },
+        });
+      }
+    });
+
+    revalidatePath("/transaksi");
+    revalidatePath("/");
+    revalidatePath("/laporan");
+    revalidatePath("/goals");
+
+    return { success: true, message: "Transaksi berhasil diperbarui." };
+  } catch (error) {
+    console.error("Update transaction error:", error);
+    return { success: false, message: "Gagal memperbarui transaksi." };
+  }
+}
+
+export async function deleteTransactionAction(transactionId: string) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return { success: false, message: "User tidak terautentikasi." };
+  }
+
+  const userId = session.user.id;
+
+  try {
+    const existingTx = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!existingTx || existingTx.userId !== userId) {
+      return { success: false, message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Kembalikan nominal pada Goal terlebih dahulu jika terhubung dengan goal
+      if (existingTx.goalId) {
+        const oldAdjustment = existingTx.jenis_transaksi ? -existingTx.nominal : existingTx.nominal;
+        await tx.goal.update({
+          where: { id: existingTx.goalId },
+          data: {
+            terkumpul: {
+              decrement: oldAdjustment,
+            },
+          },
+        });
+      }
+
+      // Hapus transaksi
+      await tx.transaction.delete({
+        where: { id: transactionId },
+      });
+    });
+
+    revalidatePath("/transaksi");
+    revalidatePath("/");
+    revalidatePath("/laporan");
+    revalidatePath("/goals");
+
+    return { success: true, message: "Transaksi berhasil dihapus." };
+  } catch (error) {
+    console.error("Delete transaction error:", error);
+    return { success: false, message: "Gagal menghapus transaksi." };
+  }
+}

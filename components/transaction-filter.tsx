@@ -185,6 +185,13 @@ const SORT_LIST = [
   { id: "terendah", icon: "💰", label: "Nominal Terendah" },
 ];
 
+const KEPERLUAN_LIST = [
+  { id: "Goals", icon: "🎯", label: "Goals" },
+  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
+  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
+  { id: "Emergency", icon: "🆘", label: "Emergency" },
+];
+
 // Komponen Select Kustom
 function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty = false }: any) {
   const [open, setOpen] = useState(false);
@@ -249,8 +256,9 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
   const [mood, setMood] = useState(searchParams.get("mood") || "");
   const [jenis, setJenis] = useState(searchParams.get("jenis") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "terbaru");
+  const [keperluan, setKeperluan] = useState(searchParams.get("keperluan") || "");
 
-  const isFilterActive = !!searchParams.get("kategori") || !!searchParams.get("mood") || !!searchParams.get("jenis") || (searchParams.get("sort") && searchParams.get("sort") !== "terbaru");
+  const isFilterActive = !!searchParams.get("kategori") || !!searchParams.get("mood") || !!searchParams.get("jenis") || !!searchParams.get("keperluan") || (searchParams.get("sort") && searchParams.get("sort") !== "terbaru");
 
   const handleApply = () => {
     const params = new URLSearchParams(searchParams);
@@ -267,6 +275,9 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
     if (sort) params.set("sort", sort);
     else params.delete("sort");
 
+    if (keperluan) params.set("keperluan", keperluan);
+    else params.delete("keperluan");
+
     replace(`${pathname}?${params.toString()}`);
     setIsOpen(false);
   };
@@ -275,6 +286,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
     setKategori("");
     setMood("");
     setJenis("");
+    setKeperluan("");
     setSort("terbaru");
   };
 
@@ -328,6 +340,15 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
                 onChange={setMood}
                 options={MOOD_LIST}
                 defaultText="Semua Mood"
+              />
+
+              {/* Keperluan - Custom Select */}
+              <CustomSelect
+                label="Keperluan"
+                value={keperluan}
+                onChange={setKeperluan}
+                options={KEPERLUAN_LIST}
+                defaultText="Semua Keperluan"
               />
 
               {/* Urutkan - Custom Select */}

@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { createTransactionAction } from "@/lib/action";
+import { getUserGoals } from "@/lib/data"; // Ambil daftar goals dari DB
 import { FiArrowLeft, FiCalendar, FiClock, FiTag, FiCreditCard, FiSmile, FiEdit2, FiChevronDown } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GoalTransaction, FormStateTransaction } from "@/types/props";
+import clsx from "clsx";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -27,16 +31,6 @@ const JENIS_TRANSAKSI = [
   { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
   { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
   { id: "Emergency", icon: "🆘", label: "Emergency" },
-];
-
-const GOALS_LIST = [
-  { id: "1", icon: "📱", label: "Beli iPhone 15" },
-  { id: "2", icon: "💻", label: "Macbook Pro" },
-  { id: "3", icon: "🏍️", label: "Motor Baru" },
-  { id: "4", icon: "🏠", label: "DP Rumah" },
-  { id: "5", icon: "✈️", label: "Liburan Jepang" },
-  { id: "6", icon: "🎓", label: "S2" },
-  { id: "7", icon: "💍", label: "Nikah" },
 ];
 
 // Komponen Select Kustom Neo-Brutalist
@@ -113,35 +107,54 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
 
 export default function TambahTransaksi() {
   const router = useRouter();
-
+  const [state, formAction, isPending] = useActionState(createTransactionAction, null);
+  const [availableGoals, setAvailableGoals] = useState<GoalTransaction[]>([]);
+  const [formErrors, setFormErrors] = useState<FormStateTransaction | null>(null);
+  
+  // State untuk form fields
   const [jenisTransaksi, setJenisTransaksi] = useState<boolean>(false); // false = pengeluaran, true = pemasukan
-  const [tipeTransaksi, setTipeTransaksi] = useState("Kebutuhan");
-  const [goals, setGoals] = useState("");
   const [nominal, setNominal] = useState("");
-  const [judul, setJudul] = useState("");
-  const [tanggal, setTanggal] = useState(new Date().toISOString().split("T")[0]);
-  const [waktu, setWaktu] = useState(new Date().toTimeString().substring(0, 5));
   const [kategori, setKategori] = useState("Makanan");
   const [aset, setAset] = useState("Cash");
+  const [tipeTransaksi, setTipeTransaksi] = useState<"Goals" | "Impulsif" | "Kebutuhan" | "Emergency">("Kebutuhan");
+  const [goalId, setGoalId] = useState("");
   const [mood, setMood] = useState("Biasa");
 
+  // Load goals saat komponen pertama kali mount
+  useEffect(() => {
+    async function loadGoals() {
+      try {
+        const goals = await getUserGoals();
+        setAvailableGoals(goals);
+        if (goals.length > 0) {
+          setGoalId(goals[0].id);
+        }
+      } catch (error) {
+        console.error("Error loading goals:", error);
+      }
+    }
+    loadGoals();
+  }, []);
+
+  useEffect(() => {
+    if (state?.message && state.success !== false) {
+      // Pendaftaran berhasil
+      setTimeout(() => {
+        router.push("/transaksi");
+      }, 1500);
+    }
+    if (state?.error) {
+      setFormErrors(state);
+    }
+  }, [state, router]);
+
   const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Hanya ambil angka
     const val = e.target.value.replace(/[^0-9]/g, "");
     if (val) {
       setNominal(parseInt(val, 10).toLocaleString('id-ID').replace(/,/g, '.'));
     } else {
       setNominal("");
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Di tahap produksi, ini akan di-submit ke backend
-    console.log({ jenisTransaksi, nominal, judul, tanggal, waktu, kategori, aset, mood });
-
-    // Redirect kembali ke beranda setelah berhasil menyimpan
-    router.push("/transaksi");
   };
 
   return (
@@ -155,7 +168,14 @@ export default function TambahTransaksi() {
         <div className="w-10"></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+      <form action={formAction} className="flex-1 flex flex-col">
+        {/* Hidden inputs untuk submit data state custom */}
+        <input type="hidden" name="jenis_transaksi" value={String(jenisTransaksi)} />
+        <input type="hidden" name="kategori" value={kategori} />
+        <input type="hidden" name="aset" value={aset} />
+        <input type="hidden" name="keperluan" value={tipeTransaksi} />
+        <input type="hidden" name="mood" value={mood} />
+        {tipeTransaksi === "Goals" && <input type="hidden" name="goalId" value={goalId} />}
 
         {/* Toggle Pemasukan / Pengeluaran */}
         <div className="p-5">
@@ -188,12 +208,16 @@ export default function TambahTransaksi() {
               type="text"
               inputMode="numeric"
               placeholder="0"
+              name="nominal"
               value={nominal}
               onChange={handleNominalChange}
               className="bg-transparent border-none outline-none text-4xl font-black text-black w-full text-left placeholder-gray-300"
               required
             />
           </div>
+          {formErrors?.error?.nominal && (
+            <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.nominal[0]}</p>
+          )}
         </div>
 
         {/* Form Details Area */}
@@ -207,12 +231,14 @@ export default function TambahTransaksi() {
             <input
               type="text"
               placeholder="Makan siang, bensin, dll..."
-              value={judul}
-              onChange={e => setJudul(e.target.value)}
+              name="judul"
               className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none placeholder-gray-400"
               required
             />
           </div>
+          {formErrors?.error?.judul && (
+            <p className="text-red-500 text-sm ml-1 font-bold">{formErrors.error.judul[0]}</p>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             {/* Input Tanggal */}
@@ -222,12 +248,13 @@ export default function TambahTransaksi() {
               </label>
               <input
                 type="date"
-                value={tanggal}
-                onChange={e => setTanggal(e.target.value)}
+                name="tanggal"
+                defaultValue={new Date().toISOString().split("T")[0]}
                 className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none"
                 required
               />
             </div>
+            
             {/* Input Waktu */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
@@ -235,54 +262,79 @@ export default function TambahTransaksi() {
               </label>
               <input
                 type="time"
-                value={waktu}
-                onChange={e => setWaktu(e.target.value)}
+                name="waktu"
+                defaultValue={new Date().toTimeString().substring(0, 5)}
                 className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-xs font-bold text-black shadow-[2px_2px_0_0_#000] outline-none"
                 required
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            {formErrors?.error?.tanggal && (
+              <p className="text-red-500 text-sm ml-1 font-bold">{formErrors.error.tanggal[0]}</p>
+            )}
+            {formErrors?.error?.waktu && (
+              <p className="text-red-500 text-sm ml-1 font-bold">{formErrors.error.waktu[0]}</p>
+            )}
+          </div>
 
           {/* Kategori & Aset Dropdowns */}
           <div className="grid grid-cols-2 gap-4">
-            <CustomSelect
-              label="Kategori"
-              icon={FiTag}
-              value={kategori}
-              onChange={setKategori}
-              options={KATEGORI_LIST}
-              defaultText="Pilih Kategori"
-            />
+            <div>
+              <CustomSelect
+                label="Kategori"
+                icon={FiTag}
+                value={kategori}
+                onChange={setKategori}
+                options={KATEGORI_LIST}
+                defaultText="Pilih Kategori"
+              />
+              {formErrors?.error?.kategori && (
+                <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.kategori[0]}</p>
+              )}
+            </div>
 
-            <CustomSelect
-              label="Aset"
-              icon={FiCreditCard}
-              value={aset}
-              onChange={setAset}
-              options={ASET_LIST}
-              defaultText="Pilih Aset"
-            />
+            <div>
+              <CustomSelect
+                label="Aset"
+                icon={FiCreditCard}
+                value={aset}
+                onChange={setAset}
+                options={ASET_LIST}
+                defaultText="Pilih Aset"
+              />
+              {formErrors?.error?.aset && (
+                <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.aset[0]}</p>
+              )}
+            </div>
           </div>
 
           <CustomSelect
             label="Jenis Transaksi"
             icon={FiTag}
-            value={tipeTransaksi}
-            onChange={setTipeTransaksi}
             options={JENIS_TRANSAKSI}
+            value={tipeTransaksi}
+            onChange={(value: string) => {
+              setTipeTransaksi(value as "Goals" | "Impulsif" | "Kebutuhan" | "Emergency");
+            }}
             defaultText="Pilih Jenis Transaksi"
           />
 
           {/* Jika jenis transaksi yang dipilih goals, maka akan muncul option untuk memilih goals yang sudah ditambahkan */}
           {tipeTransaksi === "Goals" && (
-            <CustomSelect
-              label="Goals"
-              icon={FiTag}
-              value={goals}
-              onChange={setGoals}
-              options={GOALS_LIST}
-              defaultText="Pilih Goals"
-            />
+            <div>
+              <CustomSelect
+                label="Goals"
+                icon={FiTag}
+                value={goalId}
+                onChange={setGoalId}
+                options={availableGoals}
+                defaultText="Pilih Goals"
+              />
+              {formErrors?.error?.goalId && (
+                <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.goalId[0]}</p>
+              )}
+            </div>
           )}
 
           {/* Pemilihan Mood */}
@@ -302,7 +354,9 @@ export default function TambahTransaksi() {
                   <button
                     key={m}
                     type="button"
-                    onClick={() => setMood(m)}
+                    onClick={() => {
+                      setMood(m);
+                    }}
                     className={`flex-1 py-3 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-black transition-all active:scale-95 shadow-[2px_2px_0_0_#000] ${mood === m
                       ? 'bg-black text-[#E4F087]'
                       : 'bg-white text-black hover:bg-gray-100'
@@ -314,15 +368,27 @@ export default function TambahTransaksi() {
                 );
               })}
             </div>
+            {formErrors?.error?.mood && (
+              <p className="text-red-500 text-sm ml-1 font-bold">{formErrors.error.mood[0]}</p>
+            )}
           </div>
+
+          {/* Toast / Status Message */}
+          {state?.message && (
+            <div className={`p-4 border-2 border-black rounded-xl text-xs font-black shadow-[2px_2px_0_0_#000] text-center ${
+              state.success !== false ? "bg-[#60D689] text-black" : "bg-[#FF7676] text-black"
+            }`}>
+              {state.message}
+            </div>
+          )}
 
           {/* Tombol Simpan */}
           <button
             type="submit"
-            disabled={!nominal || !judul}
-            className="w-full mt-6 py-4 bg-[#E4F087] text-black border-4 border-black font-black text-sm uppercase rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:translate-x-0"
+            disabled={isPending}
+            className={clsx("disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed w-full mt-6 py-4 bg-[#E4F087] text-black border-4 border-black font-black text-sm uppercase rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-[4px] active:translate-x-[4px] active:shadow-none", isPending && "cursor-not-allowed")}
           >
-            Simpan Transaksi
+            {isPending ? "Menyimpan..." : "Simpan Transaksi"}
           </button>
 
         </div>

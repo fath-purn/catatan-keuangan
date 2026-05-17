@@ -25,11 +25,18 @@ model User {
   code            String?
   codeExpires     DateTime?
   phone           String?
-  accounts        Account[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  sessions  Session[]
+  // Custom Profile fields
+  avatar          String @default("👦🏻")
+  targetGayaHidup Float  @default(5000000)
+
+  accounts     Account[]
+  sessions     Session[]
+  goals        Goal[]
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -69,4 +76,46 @@ model VerificationToken {
   expires    DateTime
 
   @@id([identifier, token])
+}
+
+// model Goal untuk Target Menabung
+model Goal {
+  id              String   @id @default(cuid())
+  nama            String
+  icon            String   @default("🎯")
+  target          Float
+  terkumpul       Float    @default(0)
+  tenggatWaktu    DateTime
+  warnaBackground String   @default("#DBCBFF")
+  motivasi        String?
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// model Transaction untuk Pencatatan Keuangan
+model Transaction {
+  id              String   @id @default(cuid())
+  nominal         Float
+  judul           String
+  tanggal         DateTime @default(now())
+  waktu           String // e.g. "09:00"
+  kategori        String // e.g. "Makanan", "Transportasi", "Pemasukan", "Tagihan"
+  aset            String // e.g. "Cash", "BCA", "BNI", "OVO", "Gopay"
+  mood            String   @default("Biasa") // "Biasa", "Senang", "Sedih", "Marah"
+  keperluan       String // e.g. "Kebutuhan", "Impulsif", "Emergency", "Goals"
+  jenis_transaksi Boolean // false = pengeluaran, true = pemasukan
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  goalId String?
+  goal   Goal?   @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
