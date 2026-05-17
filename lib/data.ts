@@ -345,6 +345,7 @@ const getCachedDashboardData = unstable_cache(
       const persenPengeluaran =
         limitGayaHidup > 0 ? (totalPengeluaranMonth / limitGayaHidup) * 100 : 0;
 
+      // SCENARIO 1: Overspending Target Gaya Hidup
       if (persenPengeluaran >= 100) {
         notifications.push({
           id: "overspending-critical",
@@ -361,6 +362,7 @@ const getCachedDashboardData = unstable_cache(
         });
       }
 
+      // SCENARIO 2: Goal Milestones
       if (latestGoal) {
         const persenGoal =
           latestGoal.target > 0
@@ -383,6 +385,73 @@ const getCachedDashboardData = unstable_cache(
         }
       }
 
+      // SCENARIO 3: Impulsive Mood-Buying Check
+      let totalMoodSpent = 0;
+      monthTrx.forEach((t) => {
+        if (
+          !t.jenis_transaksi &&
+          ["Sedih", "Marah", "Cemas", "Lelah"].includes(t.mood || "") &&
+          ["Jajan", "Belanja", "Hiburan", "Lainnya"].includes(t.kategori || "")
+        ) {
+          totalMoodSpent += t.nominal;
+        }
+      });
+      if (totalMoodSpent > 0) {
+        notifications.push({
+          id: "impulsive-mood-buying",
+          title: "🛍️ Mood Buying Terdeteksi!",
+          message: `Bulan ini kamu sudah membelanjakan Rp ${formatNumber(totalMoodSpent)} saat mood sedang sedih, marah, cemas, atau lelah. Belanja saat emosi kurang stabil bisa bikin dompet ikut menangis, yuk salurkan ke kegiatan positif lain! 🥺`,
+          type: "warning",
+        });
+      }
+
+      // SCENARIO 4: Giant Single Expense Warning
+      let largestTrx: any = null;
+      monthTrx.forEach((t) => {
+        if (!t.jenis_transaksi) {
+          if (!largestTrx || t.nominal > largestTrx.nominal) {
+            largestTrx = t;
+          }
+        }
+      });
+      if (largestTrx && largestTrx.nominal >= 1500000) {
+        notifications.push({
+          id: `giant-expense-${largestTrx.id}`,
+          title: "🦖 Pengeluaran Raksasa!",
+          message: `Waduh! Ada pengeluaran tunggal yang cukup besar bulan ini untuk "${largestTrx.judul}" sebesar Rp ${formatNumber(largestTrx.nominal)}. Pastikan pengeluaran ini memang terencana dengan matang ya, Kak! 💸`,
+          type: "danger",
+        });
+      }
+
+      // SCENARIO 5: Healthy Financial Cashflow vs Deficit
+      if (totalPendapatanMonth > 0 && totalPengeluaranMonth > totalPendapatanMonth) {
+        notifications.push({
+          id: "cashflow-deficit",
+          title: "📉 Arus Kas Defisit!",
+          message: `Bahaya! Bulan ini pengeluaranmu (Rp ${formatNumber(totalPengeluaranMonth)}) sudah MELEBIHI pemasukanmu (Rp ${formatNumber(totalPendapatanMonth)}). Selisih minus sebesar Rp ${formatNumber(totalPengeluaranMonth - totalPendapatanMonth)}. Segera kendalikan pengeluaranmu! 🛑`,
+          type: "danger",
+        });
+      } else if (totalPendapatanMonth > 0 && totalPengeluaranMonth > 0 && (totalPengeluaranMonth / totalPendapatanMonth) <= 0.4) {
+        notifications.push({
+          id: "super-saving-ratio",
+          title: "🏆 Keuangan Super Sehat!",
+          message: `Luar biasa! Pengeluaranmu bulan ini baru terpakai ${Math.round((totalPengeluaranMonth / totalPendapatanMonth) * 100)}% dari pemasukan. Kamu sukses menyisihkan lebih dari 60% pendapatan untuk ditabung! Keren banget Kak! 🌟`,
+          type: "success",
+        });
+      }
+
+      // SCENARIO 6: Weekend Impulse/Reward Warning
+      const currentDay = new Date().getDay(); // 0 is Sunday, 5 is Friday, 6 is Saturday
+      if ([0, 5, 6].includes(currentDay)) {
+        notifications.push({
+          id: "weekend-spending-warning",
+          title: "🍕 Self-Reward Akhir Pekan!",
+          message: "Selamat berakhir pekan! Self reward itu boleh banget Kak, tapi pastikan tetap terkontrol agar saldo dompetmu tetap bahagia di hari Senin nanti! 😉",
+          type: "info",
+        });
+      }
+
+      // SCENARIO 7: General Finance Tip
       notifications.push({
         id: "daily-tip",
         title: "💡 Tips Keuangan Cerdas",
