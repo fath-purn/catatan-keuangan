@@ -56,7 +56,7 @@ const getCachedUserGoals = unstable_cache(
     }
   },
   ["user-goals"],
-  { tags: ["goals"] }
+  { tags: ["goals"] },
 );
 
 // Fetch user's active goals for form select options
@@ -229,7 +229,7 @@ const getCachedTransactionsData = unstable_cache(
     }
   },
   ["transactions-data"],
-  { tags: ["transactions"] }
+  { tags: ["transactions"] },
 );
 
 // Fetch transactions with filtering and grouping by date
@@ -247,7 +247,10 @@ export async function getTransactionsData(options?: {
   if (!session || !session.user || !session.user.id) {
     return [];
   }
-  return getCachedTransactionsData(session.user.id, JSON.stringify(options || {}));
+  return getCachedTransactionsData(
+    session.user.id,
+    JSON.stringify(options || {}),
+  );
 }
 
 const getCachedDashboardData = unstable_cache(
@@ -362,7 +365,7 @@ const getCachedDashboardData = unstable_cache(
     }
   },
   ["dashboard-data"],
-  { tags: ["dashboard"] }
+  { tags: ["dashboard"] },
 );
 
 // Fetch general dashboard statistics (saldo, total pendapatan, pengeluaran, goals, latest transaction)
@@ -370,6 +373,8 @@ export async function getDashboardData() {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     return {
+      name: "Kakak Cantik",
+      avatar: "👦🏻",
       dompet: {
         saldo: "Rp 0",
         pendapatan: "Rp 0",

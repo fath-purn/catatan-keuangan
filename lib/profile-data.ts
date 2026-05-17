@@ -21,11 +21,13 @@ const getCachedProfileData = unstable_cache(
       if (!user) return null;
 
       // Format targetGayaHidup to Indonesian number style (e.g. 5.000.000)
-      const formattedTarget = user.targetGayaHidup.toLocaleString("id-ID").replace(/,/g, ".");
+      const formattedTarget = user.targetGayaHidup
+        .toLocaleString("id-ID")
+        .replace(/,/g, ".");
 
       return {
         id: user.id,
-        nama: user.name || "User",
+        nama: user.name || "Kakak Cantik",
         icon: user.avatar || "👦🏻",
         targetGayaHidup: formattedTarget,
         rawTargetGayaHidup: user.targetGayaHidup,
@@ -37,7 +39,7 @@ const getCachedProfileData = unstable_cache(
     }
   },
   ["profile-data"],
-  { tags: ["profile"] }
+  { tags: ["profile"] },
 );
 
 export async function getProfileData() {
