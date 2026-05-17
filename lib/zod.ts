@@ -30,3 +30,16 @@ export const LoginSchema = z.object({
   email: z.string().email("Format email tidak valid"),
   password: z.string().min(1, "Password harus diisi"),
 });
+
+export const GoalSchema = z.object({
+  nama: z.string().min(1, "Nama target tabungan harus diisi"),
+  icon: z.string().default("🎯"),
+  target: z.coerce.number().min(1, "Target tabungan harus lebih besar dari 0"),
+  tenggatWaktu: z.preprocess((arg) => {
+    if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+    return arg;
+  }, z.date()),
+  warnaBackground: z.string().default("#DBCBFF"),
+  motivasi: z.string().nullable().optional(),
+});
+

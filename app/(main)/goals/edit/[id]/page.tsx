@@ -4,45 +4,11 @@ import { useState, useEffect } from "react";
 import { FiArrowLeft, FiTarget, FiCalendar, FiMessageCircle, FiDroplet, FiSmile, FiEdit2 } from "react-icons/fi";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { getGoalById } from "@/lib/goals-data";
+import { updateGoalAction, deleteGoalAction } from "@/lib/goals-action";
 
 const COLORS = ["#DBCBFF", "#E4F087", "#60D689", "#FF7676", "#FFB443", "#87CEFA"];
 const EMOJIS = ["📱", "💻", "🏠", "✈️", "🚗", "🎓", "💍", "💰", "🎮", "🎸"];
-
-// Data dummy untuk prepopulate form
-const GOALS_DATA: Record<string, any> = {
-  "0": {
-    nama: "Beli iPhone 15",
-    icon: "📱",
-    target: "15.000.000",
-    tenggatWaktu: "2026-12-12",
-    warnaBackground: "#DBCBFF",
-    motivasi: "Ayo nabung lagi, biar mirror selfie makin kece! ✨",
-  },
-  "1": {
-    nama: "Macbook Pro M4",
-    icon: "💻",
-    target: "25.000.000",
-    tenggatWaktu: "2027-01-10",
-    warnaBackground: "#E4F087",
-    motivasi: "Biar ngoding makin ngebut, bentar lagi kebeli! 🚀",
-  },
-  "2": {
-    nama: "DP Rumah",
-    icon: "🏠",
-    target: "100.000.000",
-    tenggatWaktu: "2030-01-01",
-    warnaBackground: "#60D689",
-    motivasi: "Perjalanan ribuan mil dimulai dari satu langkah kecil. Semangat! 🏡",
-  },
-  "4": {
-    nama: "Liburan Jepang",
-    icon: "✈️",
-    target: "20.000.000",
-    tenggatWaktu: "2026-08-20",
-    warnaBackground: "#FF7676",
-    motivasi: "Wahh dikit lagi! Siap-siap packing koper ke Tokyo! 🎌",
-  },
-};
 
 export default function EditGoals() {
   const router = useRouter();
@@ -55,19 +21,28 @@ export default function EditGoals() {
   const [motivasi, setMotivasi] = useState("");
   const [warna, setWarna] = useState(COLORS[0]);
   const [icon, setIcon] = useState(EMOJIS[0]);
-  
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Di aplikasi asli, kita akan fetch data dari backend berdasarkan `id`
-    if (id && GOALS_DATA[id]) {
-      const data = GOALS_DATA[id];
-      setNominal(data.target);
-      setNama(data.nama);
-      setTenggatWaktu(data.tenggatWaktu);
-      setWarna(data.warnaBackground);
-      setIcon(data.icon);
-      setMotivasi(data.motivasi);
+    if (id) {
+      getGoalById(id).then((data) => {
+        if (data) {
+          setNominal(data.target.toLocaleString('id-ID').replace(/,/g, '.'));
+          setNama(data.nama);
+          setTenggatWaktu(data.tenggatWaktu);
+          setWarna(data.warnaBackground);
+          setIcon(data.icon);
+          setMotivasi(data.motivasi);
+        } else {
+          setError("Goal tidak ditemukan atau Anda tidak memiliki akses.");
+        }
+      }).catch(err => {
+        console.error("Error loading goal:", err);
+        setError("Gagal memuat data goal.");
+      });
     }
   }, [id]);
 
@@ -80,21 +55,53 @@ export default function EditGoals() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Proses update ke backend
-    console.log("UPDATE GOAL", id, { nominal, nama, tenggatWaktu, motivasi, warna, icon });
-    
-    // Kembali ke halaman goals
-    router.push("/goals");
-  };
+    setLoading(true);
+    setError(null);
 
-  const handleDelete = () => {
-    if (window.confirm("Yakin ingin menghapus goal ini?")) {
-      console.log("DELETE GOAL", id);
-      router.push("/goals");
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("target", nominal);
+    formData.append("nama", nama);
+    formData.append("tenggatWaktu", tenggatWaktu);
+    formData.append("motivasi", motivasi);
+    formData.append("warnaBackground", warna);
+    formData.append("icon", icon);
+
+    try {
+      const res = await updateGoalAction(null, formData);
+      if (res.success) {
+        router.push("/goals");
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan koneksi saat memperbarui.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await deleteGoalAction(id);
+      if (res.success) {
+        router.push("/goals");
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan koneksi saat menghapus.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black">
@@ -108,7 +115,7 @@ export default function EditGoals() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col pb-10">
-        
+
         {/* Area Input Nominal (Besar) */}
         <div className="px-5 mb-2 flex flex-col items-center mt-6">
           <p className="text-[10px] font-bold mb-2 uppercase tracking-wider text-black">
@@ -138,22 +145,22 @@ export default function EditGoals() {
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
                 <FiSmile className="w-3 h-3" /> Ikon
               </label>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 className="w-14 h-[52px] bg-white border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] flex items-center justify-center text-2xl active:scale-95 transition-transform"
               >
                 {icon}
               </button>
-              
+
               {/* Simple Emoji Picker Dropdown */}
               {showEmojiPicker && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)}></div>
                   <div className="absolute top-full left-0 mt-2 z-50 bg-white border-2 border-black rounded-2xl shadow-[4px_4px_0_0_#000] p-3 grid grid-cols-5 gap-2 w-[220px]">
                     {EMOJIS.map(e => (
-                      <button 
-                        key={e} 
+                      <button
+                        key={e}
                         type="button"
                         onClick={() => { setIcon(e); setShowEmojiPicker(false); }}
                         className="text-2xl hover:bg-gray-100 rounded-lg p-1 transition-colors"
@@ -231,19 +238,29 @@ export default function EditGoals() {
 
         </div>
 
+        {error && (
+          <div className="px-5 mt-2">
+            <div className="bg-[#FF7676] text-black border-2 border-black rounded-xl p-3.5 text-xs font-black shadow-[2px_2px_0_0_#000]">
+              ⚠️ {error}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="px-5 mt-4 flex flex-col gap-4">
-          <button 
-            type="submit" 
-            className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-4 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-4 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
           >
-            <FiEdit2 className="w-5 h-5" /> Simpan Perubahan
+            <FiEdit2 className="w-5 h-5" /> {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
-          
-          <button 
+
+          <button
             type="button"
             onClick={handleDelete}
-            className="w-full bg-[#FF7676] text-black border-4 border-black rounded-2xl py-3 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2"
+            disabled={loading}
+            className="w-full bg-[#FF7676] text-black border-4 border-black rounded-2xl py-3 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
           >
             Hapus Goal
           </button>

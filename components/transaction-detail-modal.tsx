@@ -79,6 +79,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
   const [keperluan, setKeperluan] = useState("");
   const [jenisTrx, setJenisTrx] = useState(false); // true = pemasukan
   const [goalId, setGoalId] = useState("");
+  const [formErrors, setFormErrors] = useState<string>("");
 
   // Load goals
   useEffect(() => {
@@ -153,6 +154,8 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
       const res = await updateTransactionAction(null, formData);
       if (res.success) {
         onClose();
+      } else {
+        setFormErrors(res.message);
       }
     } catch (err) {
       console.error("Error updating transaction:", err);
@@ -272,6 +275,13 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
               <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black font-bold pointer-events-none" />
             </div>
           </div>
+
+          {/* Toast / Status Message */}
+          {formErrors && (
+            <div className={`p-4 border-2 border-black rounded-xl text-xs font-black shadow-[2px_2px_0_0_#000] text-center bg-[#FF7676] text-black`}>
+              {formErrors}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 shrink-0">

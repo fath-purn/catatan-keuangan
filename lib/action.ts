@@ -5,7 +5,10 @@ import { TransactionSchema } from "@/lib/zod";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
-export async function createTransactionAction(prevState: any, formData: FormData) {
+export async function createTransactionAction(
+  prevState: any,
+  formData: FormData,
+) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     return { success: false, message: "User tidak terautentikasi." };
@@ -68,9 +71,16 @@ export async function createTransactionAction(prevState: any, formData: FormData
         });
 
         if (goal) {
-          // Jika jenis_transaksi = false (Pengeluaran/menabung ke goal): menambah nominal terkumpul
-          // Jika jenis_transaksi = true (Pemasukan/penarikan dari goal): mengurangi nominal terkumpul
-          const adjustment = data.jenis_transaksi ? -data.nominal : data.nominal;
+          // Jika jenis_transaksi = false (Pengeluaran / Tarik dari goal) dan saldo di goal tidak mencukupi
+          if (!data.jenis_transaksi && goal.terkumpul < data.nominal) {
+            throw new Error("Saldo di target tabungan (goal) tidak mencukupi.");
+          }
+
+          // Jika jenis_transaksi = true (Pemasukan/Menabung ke goal): menambah nominal terkumpul
+          // Jika jenis_transaksi = false (Pengeluaran/Withdraw dari goal): mengurangi nominal terkumpul
+          const adjustment = data.jenis_transaksi
+            ? data.nominal
+            : -data.nominal;
           await tx.goal.update({
             where: { id: data.goalId },
             data: {
@@ -89,13 +99,16 @@ export async function createTransactionAction(prevState: any, formData: FormData
     revalidatePath("/goals");
 
     return { success: true, message: "Transaksi berhasil disimpan." };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create transaction error:", error);
-    return { success: false, message: "Gagal menyimpan transaksi." };
+    return { success: false, message: error.message || "Gagal menyimpan transaksi." };
   }
 }
 
-export async function updateTransactionAction(prevState: any, formData: FormData) {
+export async function updateTransactionAction(
+  prevState: any,
+  formData: FormData,
+) {
   const session = await auth();
   if (!session || !session.user || !session.user.id) {
     return { success: false, message: "User tidak terautentikasi." };
@@ -142,21 +155,32 @@ export async function updateTransactionAction(prevState: any, formData: FormData
     });
 
     if (!existingTx || existingTx.userId !== userId) {
-      return { success: false, message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses." };
+      return {
+        success: false,
+        message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses.",
+      };
     }
 
+    console.log("Update transaction:", existingTx);
+
     await prisma.$transaction(async (tx) => {
+      let revertedGoalBalance = 0;
       // 1. Revert nominal terkumpul dari Goal yang lama
       if (existingTx.goalId) {
-        const oldAdjustment = existingTx.jenis_transaksi ? -existingTx.nominal : existingTx.nominal;
-        await tx.goal.update({
+        // Pemasukan (true) menambah, maka revert adalah mengurangi (-nominal)
+        // Pengeluaran (false) mengurangi, maka revert adalah menambah (+nominal)
+        const oldAdjustment = existingTx.jenis_transaksi
+          ? -existingTx.nominal
+          : existingTx.nominal;
+        const updatedGoal = await tx.goal.update({
           where: { id: existingTx.goalId },
           data: {
             terkumpul: {
-              decrement: oldAdjustment,
+              increment: oldAdjustment,
             },
           },
         });
+        revertedGoalBalance = updatedGoal.terkumpul;
       }
 
       // 2. Update data transaksi
@@ -178,15 +202,43 @@ export async function updateTransactionAction(prevState: any, formData: FormData
 
       // 3. Tambahkan nominal terkumpul ke Goal yang baru jika ada
       if (data.goalId) {
-        const newAdjustment = data.jenis_transaksi ? -data.nominal : data.nominal;
-        await tx.goal.update({
-          where: { id: data.goalId },
-          data: {
-            terkumpul: {
-              increment: newAdjustment,
+        if (data.goalId === existingTx.goalId) {
+          // Jika goal sama, cek dari revertedGoalBalance
+          if (!data.jenis_transaksi && revertedGoalBalance < data.nominal) {
+            throw new Error("Saldo di target tabungan (goal) tidak mencukupi.");
+          }
+
+          const newAdjustment = data.jenis_transaksi ? data.nominal : -data.nominal;
+          await tx.goal.update({
+            where: { id: data.goalId },
+            data: {
+              terkumpul: {
+                increment: newAdjustment,
+              },
             },
-          },
-        });
+          });
+        } else {
+          // Jika goal berbeda, cek dari goal baru
+          const newGoal = await tx.goal.findUnique({
+            where: { id: data.goalId },
+          });
+
+          if (newGoal) {
+            if (!data.jenis_transaksi && newGoal.terkumpul < data.nominal) {
+              throw new Error("Saldo di target tabungan (goal) tidak mencukupi.");
+            }
+
+            const newAdjustment = data.jenis_transaksi ? data.nominal : -data.nominal;
+            await tx.goal.update({
+              where: { id: data.goalId },
+              data: {
+                terkumpul: {
+                  increment: newAdjustment,
+                },
+              },
+            });
+          }
+        }
       }
     });
 
@@ -196,9 +248,9 @@ export async function updateTransactionAction(prevState: any, formData: FormData
     revalidatePath("/goals");
 
     return { success: true, message: "Transaksi berhasil diperbarui." };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update transaction error:", error);
-    return { success: false, message: "Gagal memperbarui transaksi." };
+    return { success: false, message: error.message || "Gagal memperbarui transaksi." };
   }
 }
 
@@ -216,18 +268,23 @@ export async function deleteTransactionAction(transactionId: string) {
     });
 
     if (!existingTx || existingTx.userId !== userId) {
-      return { success: false, message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses." };
+      return {
+        success: false,
+        message: "Transaksi tidak ditemukan atau Anda tidak memiliki akses.",
+      };
     }
 
     await prisma.$transaction(async (tx) => {
       // Kembalikan nominal pada Goal terlebih dahulu jika terhubung dengan goal
       if (existingTx.goalId) {
-        const oldAdjustment = existingTx.jenis_transaksi ? -existingTx.nominal : existingTx.nominal;
+        const oldAdjustment = existingTx.jenis_transaksi
+          ? -existingTx.nominal
+          : existingTx.nominal;
         await tx.goal.update({
           where: { id: existingTx.goalId },
           data: {
             terkumpul: {
-              decrement: oldAdjustment,
+              increment: oldAdjustment,
             },
           },
         });

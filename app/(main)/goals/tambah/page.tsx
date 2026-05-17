@@ -4,6 +4,8 @@ import { useState } from "react";
 import { FiArrowLeft, FiTarget, FiCalendar, FiMessageCircle, FiDroplet, FiSmile } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createGoalAction } from "@/lib/goals-action";
+
 
 const COLORS = ["#DBCBFF", "#E4F087", "#60D689", "#FF7676", "#FFB443", "#87CEFA"];
 const EMOJIS = ["📱", "💻", "🏠", "✈️", "🚗", "🎓", "💍", "💰", "🎮", "🎸"];
@@ -19,6 +21,8 @@ export default function TambahGoals() {
   const [icon, setIcon] = useState(EMOJIS[0]);
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
@@ -29,19 +33,39 @@ export default function TambahGoals() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Proses ke backend
-    console.log({ nominal, nama, tenggatWaktu, motivasi, warna, icon });
+    setLoading(true);
+    setError(null);
 
-    // Kembali ke halaman goals
-    router.push("/goals");
+    const formData = new FormData();
+    formData.append("target", nominal);
+    formData.append("nama", nama);
+    formData.append("tenggatWaktu", tenggatWaktu);
+    formData.append("motivasi", motivasi);
+    formData.append("warnaBackground", warna);
+    formData.append("icon", icon);
+
+    try {
+      const res = await createGoalAction(null, formData);
+      if (res.success) {
+        router.push("/goals");
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan koneksi saat menyimpan.");
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black">
       {/* Header Sticky Neo-Brutalist */}
-      <div className={`${warna} px-5 pt-8 pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20 transition-colors duration-300`}>
+      <div className={`${warna} px-5 pt-8 bg-[#FDF8EE] pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20 transition-colors duration-300`}>
         <Link href="/goals" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
@@ -173,13 +197,22 @@ export default function TambahGoals() {
 
         </div>
 
+        {error && (
+          <div className="px-5 mt-2">
+            <div className="bg-[#FF7676] text-black border-2 border-black rounded-xl p-3.5 text-xs font-black shadow-[2px_2px_0_0_#000]">
+              ⚠️ {error}
+            </div>
+          </div>
+        )}
+
         {/* Action Button */}
         <div className="px-5 mt-4">
           <button
             type="submit"
-            className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-4 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2"
+            disabled={loading}
+            className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-4 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
           >
-            <FiTarget className="w-5 h-5" /> Simpan Goal Baru
+            <FiTarget className="w-5 h-5" /> {loading ? "Menyimpan..." : "Simpan Goal Baru"}
           </button>
         </div>
 

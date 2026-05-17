@@ -65,10 +65,10 @@ export default function TransactionListClient({ data }: { data: FullTransaction[
                         {trx.jenis_transaksi ? <FiArrowDown className="w-6 h-6 text-black" /> : <FiArrowUp className="w-6 h-6 text-black" />}
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
-                          <span className="font-black text-black text-sm leading-none">{trx.jenis}</span>
-                          <span className="text-sm ml-0.5 drop-shadow-md" title={trx.mood}>{getMoodEmoji(trx.mood)}</span>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className="font-black text-black text-sm leading-none truncate max-w-[130px]" title={trx.jenis}>{trx.jenis}</span>
+                          <span className="text-sm ml-0.5 drop-shadow-md shrink-0" title={trx.mood}>{getMoodEmoji(trx.mood)}</span>
                         </div>
 
                         <div className="flex items-center gap-1.5 text-[9px] font-bold text-black mt-0.5">

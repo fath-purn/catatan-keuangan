@@ -58,14 +58,11 @@ async function DashboardContent() {
 
         {/* Tampilan Goals */}
         {data.goals ? (
-          <div className="bg-[#DBCBFF] border-2 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
+          <Link href="/goals" className="bg-[#DBCBFF] border-2 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
             <div className="flex justify-between items-center mb-4">
               <div className="flex justify-center items-center gap-2">
                 <span className="text-xl drop-shadow-md">🎯</span>
                 <h2 className="font-black text-sm uppercase">Goals Kamu</h2>
-                <Link href="/goals/tambah" className="text-[10px] font-bold px-2 py-1 bg-[#FDF8EE] border-2 border-black rounded-lg shadow-[2px_2px_0_0_#000] hover:bg-[#E4F087] transition-colors">
-                  Tambah Goals
-                </Link>
               </div>
               <span className="text-[10px] font-bold px-2 py-1 bg-white border-2 border-black rounded-lg shadow-[2px_2px_0_0_#000]">{data.goals.nama}</span>
             </div>
@@ -77,11 +74,13 @@ async function DashboardContent() {
               {/* Progress Bar Neo-brutalist */}
               <div className="h-6 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden relative shadow-inner">
                 <div className="absolute top-0 left-0 bottom-0 bg-[#E4F087] border-r-2 border-black flex items-center justify-end px-2" style={{ width: data.goals.persen + '%' }}>
-                  <span className="text-[10px] font-black text-black">{data.goals.persen}%</span>
+                  {data.goals.persen !== 0 && (
+                    <span className="text-[10px] font-black text-black">{data.goals.persen}%</span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ) : (
           <div className="bg-[#DBCBFF] border-2 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center text-center gap-2">
             <span className="text-4xl drop-shadow-md">🎯</span>
