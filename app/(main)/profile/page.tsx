@@ -1,17 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiUser, FiEdit3, FiPieChart, FiTrendingUp, FiTrendingDown, FiCalendar, FiSmile, FiSave, FiX } from "react-icons/fi";
+import { getProfileData } from "@/lib/profile-data";
+import { updateProfileAction } from "@/lib/profile-action";
 
 const ICONS = ["👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐱", "🐶", "🐸", "🐻", "🦊", "🐼", "🐰", "🐯"];
 
 export default function ProfilePage() {
   // State Profile
   const [isEditing, setIsEditing] = useState(false);
-  const [nama, setNama] = useState("Aretha");
+  const [nama, setNama] = useState("");
   const [icon, setIcon] = useState("👦🏻");
-  const [targetGayaHidup, setTargetGayaHidup] = useState("5.000.000");
+  const [targetGayaHidup, setTargetGayaHidup] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getProfileData().then((data) => {
+      if (data) {
+        setNama(data.nama);
+        setIcon(data.icon);
+        setTargetGayaHidup(data.targetGayaHidup);
+      }
+    }).catch((err) => {
+      console.error("Gagal memuat profile:", err);
+      setError("Gagal memuat profile.");
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, []);
 
   const handleTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
@@ -22,10 +44,31 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Simpan ke backend
-    console.log("Saved:", { nama, icon, targetGayaHidup });
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const formData = new FormData();
+    formData.append("name", nama);
+    formData.append("avatar", icon);
+    formData.append("targetGayaHidup", targetGayaHidup);
+
+    try {
+      const res = await updateProfileAction(null, formData);
+      if (res.success) {
+        setIsEditing(false);
+        setSuccess("Profile berhasil diperbarui!");
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      console.error("Gagal menyimpan profile:", err);
+      setError("Terjadi kesalahan koneksi saat menyimpan.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,7 +81,8 @@ export default function ProfilePage() {
         </h1>
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95"
+          disabled={loading}
+          className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
         >
           {isEditing ? <FiX className="w-5 h-5 font-black text-black" /> : <FiEdit3 className="w-5 h-5 font-black text-black" />}
         </button>
@@ -48,16 +92,28 @@ export default function ProfilePage() {
 
         {/* Section Edit & Info Profile */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0_0_#000] relative">
+          
+          {error && (
+            <div className="bg-[#FF7676] text-black border-2 border-black rounded-xl p-3.5 text-xs font-black shadow-[2px_2px_0_0_#000] mb-4 text-center">
+              ⚠️ {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-[#60D689] text-black border-2 border-black rounded-xl p-3.5 text-xs font-black shadow-[2px_2px_0_0_#000] mb-4 text-center">
+              🎉 {success}
+            </div>
+          )}
+
           {!isEditing ? (
             /* View Mode */
             <div className="flex flex-col items-center text-center">
               <div className="w-24 h-24 bg-[#DBCBFF] border-4 border-black rounded-full shadow-[4px_4px_0_0_#000] flex items-center justify-center text-5xl mb-4">
                 {icon}
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-wide mb-1">{nama}</h2>
+              <h2 className="text-2xl font-black uppercase tracking-wide mb-1">{nama || "Loading..."}</h2>
               <div className="inline-block bg-[#E4F087] border-2 border-black px-4 py-2 rounded-xl shadow-[2px_2px_0_0_#000] mt-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5">Target Gaya Hidup</p>
-                <p className="text-sm font-black">Rp {targetGayaHidup} / bln</p>
+                <p className="text-sm font-black">Rp {targetGayaHidup || "0"} / bln</p>
               </div>
             </div>
           ) : (
@@ -74,8 +130,9 @@ export default function ProfilePage() {
                   {ICONS.map((i) => (
                     <button
                       key={i}
+                      disabled={loading}
                       onClick={() => setIcon(i)}
-                      className={`w-12 h-12 shrink-0 border-2 border-black rounded-full text-2xl flex items-center justify-center transition-transform active:scale-95 ${icon === i ? 'bg-[#FF7676] shadow-none translate-y-1 translate-x-1 ring-2 ring-black ring-offset-2' : 'bg-gray-100 shadow-[2px_2px_0_0_#000]'}`}
+                      className={`w-12 h-12 shrink-0 border-2 border-black rounded-full text-2xl flex items-center justify-center transition-transform active:scale-95 ${icon === i ? 'bg-[#FF7676] shadow-none translate-y-1 translate-x-1 ring-2 ring-black ring-offset-2' : 'bg-gray-100 shadow-[2px_2px_0_0_#000]'} disabled:opacity-50`}
                     >
                       {i}
                     </button>
@@ -91,8 +148,10 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   value={nama}
+                  disabled={loading}
                   onChange={(e) => setNama(e.target.value)}
-                  className="w-full bg-gray-50 border-2 border-black rounded-xl px-4 py-3 text-sm font-bold shadow-[2px_2px_0_0_#000] outline-none focus:bg-white"
+                  className="w-full bg-gray-50 border-2 border-black rounded-xl px-4 py-3 text-sm font-bold shadow-[2px_2px_0_0_#000] outline-none focus:bg-white disabled:opacity-50"
+                  required
                 />
               </div>
 
@@ -107,8 +166,10 @@ export default function ProfilePage() {
                     type="text"
                     inputMode="numeric"
                     value={targetGayaHidup}
+                    disabled={loading}
                     onChange={handleTargetChange}
-                    className="w-full bg-transparent border-none outline-none text-sm font-bold"
+                    className="w-full bg-transparent border-none outline-none text-sm font-bold disabled:opacity-50"
+                    required
                   />
                 </div>
                 <p className="text-[9px] font-bold text-gray-500 italic mt-1">Batas maksimal pengeluaranmu per bulan.</p>
@@ -116,9 +177,10 @@ export default function ProfilePage() {
 
               <button
                 onClick={handleSave}
-                className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-3.5 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2"
+                disabled={loading}
+                className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-3.5 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
               >
-                <FiSave className="w-4 h-4" /> Simpan
+                <FiSave className="w-4 h-4" /> {loading ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           )}

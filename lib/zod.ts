@@ -43,3 +43,10 @@ export const GoalSchema = z.object({
   motivasi: z.string().nullable().optional(),
 });
 
+export const ProfileSchema = z.object({
+  name: z.string().min(1, "Nama panggilan harus diisi"),
+  avatar: z.string().default("👦🏻"),
+  targetGayaHidup: z.coerce.number().min(0, "Target gaya hidup harus bernilai positif"),
+});
+
+
