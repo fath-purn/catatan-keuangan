@@ -8,35 +8,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GoalTransaction, FormStateTransaction } from "@/types/props";
 import clsx from "clsx";
-
-const KATEGORI_LIST = [
-  { id: "Makanan", icon: "🍔", label: "Makanan" },
-  { id: "Transportasi", icon: "🚗", label: "Transport" },
-  { id: "Belanja", icon: "🛍️", label: "Belanja" },
-  { id: "Tagihan", icon: "🧾", label: "Tagihan" },
-  { id: "Pemasukan", icon: "💰", label: "Pemasukan" },
-  { id: "Lainnya", icon: "📦", label: "Lainnya" },
-];
-
-const ASET_LIST = [
-  { id: "Cash", icon: "💵", label: "Cash" },
-  { id: "BNI", icon: "🏦", label: "BNI" },
-  { id: "BCA", icon: "🏦", label: "BCA" },
-  { id: "OVO", icon: "📱", label: "OVO" },
-  { id: "Gopay", icon: "📱", label: "Gopay" },
-];
-
-const JENIS_TRANSAKSI = [
-  { id: "Goals", icon: "🎯", label: "Goals" },
-  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
-  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
-  { id: "Emergency", icon: "🆘", label: "Emergency" },
-];
+import { useLanguage } from "@/components/language-provider";
 
 // Komponen Select Kustom Neo-Brutalist
 function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText }: any) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { t } = useLanguage();
   const selected = options.find((o: any) => o.id === value);
 
   const filteredOptions = options.filter((o: any) =>
@@ -76,7 +54,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
             <div className="p-2 border-b-2 border-black bg-gray-50 shrink-0">
               <input
                 type="text"
-                placeholder="Cari..."
+                placeholder={t("cari_placeholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border-2 border-black rounded-lg px-3 py-2 text-xs font-bold text-black outline-none shadow-[2px_2px_0_0_#000] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none transition-all"
@@ -96,7 +74,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
                 {o.label}
               </button>
             )) : (
-              <div className="px-4 py-6 text-center text-xs font-bold text-gray-500">Tidak ada hasil</div>
+              <div className="px-4 py-6 text-center text-xs font-bold text-gray-500">{t("tidak_ada_hasil")}</div>
             )}
           </div>
         </div>
@@ -107,6 +85,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, defaultText
 
 export default function TambahTransaksi() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [state, formAction, isPending] = useActionState(createTransactionAction, null);
   const [availableGoals, setAvailableGoals] = useState<GoalTransaction[]>([]);
   const [formErrors, setFormErrors] = useState<FormStateTransaction | null>(null);
@@ -119,6 +98,30 @@ export default function TambahTransaksi() {
   const [tipeTransaksi, setTipeTransaksi] = useState<"Goals" | "Impulsif" | "Kebutuhan" | "Emergency">("Kebutuhan");
   const [goalId, setGoalId] = useState("");
   const [mood, setMood] = useState("Biasa");
+
+  const translatedKategoriList = [
+    { id: "Makanan", icon: "🍔", label: t("opt_makanan") },
+    { id: "Transportasi", icon: "🚗", label: t("opt_transportasi") },
+    { id: "Belanja", icon: "🛍️", label: t("opt_belanja") },
+    { id: "Tagihan", icon: "🧾", label: t("opt_tagihan") },
+    { id: "Pemasukan", icon: "💰", label: t("opt_pemasukan") },
+    { id: "Lainnya", icon: "📦", label: t("opt_lainnya") },
+  ];
+
+  const translatedAsetList = [
+    { id: "Cash", icon: "💵", label: t("opt_semua") === "All" ? "Cash" : "Tunai" },
+    { id: "BNI", icon: "🏦", label: "BNI" },
+    { id: "BCA", icon: "🏦", label: "BCA" },
+    { id: "OVO", icon: "📱", label: "OVO" },
+    { id: "Gopay", icon: "📱", label: "Gopay" },
+  ];
+
+  const translatedJenisTransaksi = [
+    { id: "Goals", icon: "🎯", label: t("opt_goals") },
+    { id: "Impulsif", icon: "🛍️", label: t("opt_impulsif") },
+    { id: "Kebutuhan", icon: "🛒", label: t("opt_kebutuhan") },
+    { id: "Emergency", icon: "🆘", label: t("opt_emergency") },
+  ];
 
   // Load goals saat komponen pertama kali mount
   useEffect(() => {
@@ -164,7 +167,7 @@ export default function TambahTransaksi() {
         <Link href="/transaksi" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black">Tambah Transaksi</h1>
+        <h1 className="text-xl font-black text-black">{t("tambah_transaksi")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -185,14 +188,14 @@ export default function TambahTransaksi() {
               onClick={() => setJenisTransaksi(false)}
               className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${!jenisTransaksi ? "bg-[#FF7676] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}
             >
-              PENGELUARAN
+              {t("pengeluaran_caps")}
             </button>
             <button
               type="button"
               onClick={() => setJenisTransaksi(true)}
               className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border-2 ${jenisTransaksi ? "bg-[#60D689] border-black text-black shadow-[2px_2px_0_0_#000]" : "border-transparent text-gray-500 hover:bg-gray-100"}`}
             >
-              PEMASUKAN
+              {t("pemasukan_caps")}
             </button>
           </div>
         </div>
@@ -200,7 +203,7 @@ export default function TambahTransaksi() {
         {/* Area Input Nominal (Besar) */}
         <div className="px-5 mb-2 flex flex-col items-center">
           <p className="text-[10px] font-bold mb-2 uppercase tracking-wider text-black">
-            Masukkan Nominal
+            {t("masukkan_nominal")}
           </p>
           <div className="flex items-center justify-center w-full bg-white border-4 border-black rounded-[32px] py-6 px-4 shadow-[8px_8px_0_0_#000]">
             <span className="text-3xl font-black mr-2">Rp</span>
@@ -226,11 +229,11 @@ export default function TambahTransaksi() {
           {/* Input Keterangan Transaksi */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-              <FiEdit2 className="w-3 h-3" /> Keterangan
+              <FiEdit2 className="w-3 h-3" /> {t("keterangan")}
             </label>
             <input
               type="text"
-              placeholder="Makan siang, bensin, dll..."
+              placeholder={t("placeholder_keterangan")}
               name="judul"
               className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none placeholder-gray-400"
               required
@@ -244,7 +247,7 @@ export default function TambahTransaksi() {
             {/* Input Tanggal */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-                <FiCalendar className="w-3 h-3" /> Tanggal
+                <FiCalendar className="w-3 h-3" /> {t("tanggal")}
               </label>
               <input
                 type="date"
@@ -258,7 +261,7 @@ export default function TambahTransaksi() {
             {/* Input Waktu */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-                <FiClock className="w-3 h-3" /> Waktu
+                <FiClock className="w-3 h-3" /> {t("waktu")}
               </label>
               <input
                 type="time"
@@ -282,12 +285,12 @@ export default function TambahTransaksi() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <CustomSelect
-                label="Kategori"
+                label={t("kategori")}
                 icon={FiTag}
                 value={kategori}
                 onChange={setKategori}
-                options={KATEGORI_LIST}
-                defaultText="Pilih Kategori"
+                options={translatedKategoriList}
+                defaultText={t("pilih_kategori")}
               />
               {formErrors?.error?.kategori && (
                 <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.kategori[0]}</p>
@@ -296,12 +299,12 @@ export default function TambahTransaksi() {
 
             <div>
               <CustomSelect
-                label="Aset"
+                label={t("aset")}
                 icon={FiCreditCard}
                 value={aset}
                 onChange={setAset}
-                options={ASET_LIST}
-                defaultText="Pilih Aset"
+                options={translatedAsetList}
+                defaultText={t("pilih_aset")}
               />
               {formErrors?.error?.aset && (
                 <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.aset[0]}</p>
@@ -310,26 +313,26 @@ export default function TambahTransaksi() {
           </div>
 
           <CustomSelect
-            label="Jenis Transaksi"
+            label={t("keperluan")}
             icon={FiTag}
-            options={JENIS_TRANSAKSI}
+            options={translatedJenisTransaksi}
             value={tipeTransaksi}
             onChange={(value: string) => {
               setTipeTransaksi(value as "Goals" | "Impulsif" | "Kebutuhan" | "Emergency");
             }}
-            defaultText="Pilih Jenis Transaksi"
+            defaultText={t("pilih_jenis_transaksi")}
           />
 
           {/* Jika jenis transaksi yang dipilih goals, maka akan muncul option untuk memilih goals yang sudah ditambahkan */}
           {tipeTransaksi === "Goals" && (
             <div>
               <CustomSelect
-                label="Goals"
+                label={t("opt_goals")}
                 icon={FiTag}
                 value={goalId}
                 onChange={setGoalId}
                 options={availableGoals}
-                defaultText="Pilih Goals"
+                defaultText={t("pilih_goals")}
               />
               {formErrors?.error?.goalId && (
                 <p className="text-red-500 text-sm ml-1 mt-1 font-bold">{formErrors.error.goalId[0]}</p>
@@ -340,15 +343,21 @@ export default function TambahTransaksi() {
           {/* Pemilihan Mood */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1 mb-1">
-              <FiSmile className="w-3 h-3" /> Bagaimana perasaanmu?
+              <FiSmile className="w-3 h-3" /> {t("bagaimana_perasaanmu")}
             </label>
             <div className="flex gap-2">
               {["Senang", "Biasa", "Sedih", "Marah"].map((m) => {
-                const getEmoji = (mood: string) => {
-                  if (mood === "Senang") return "😊";
-                  if (mood === "Marah") return "😡";
-                  if (mood === "Sedih") return "😢";
+                const getEmoji = (moodName: string) => {
+                  if (moodName === "Senang") return "😊";
+                  if (moodName === "Marah") return "😡";
+                  if (moodName === "Sedih") return "😢";
                   return "😐";
+                };
+                const getTranslatedMoodLabel = (moodName: string) => {
+                  if (moodName === "Senang") return t("opt_senang");
+                  if (moodName === "Marah") return t("opt_marah");
+                  if (moodName === "Sedih") return t("opt_sedih");
+                  return t("opt_biasa");
                 };
                 return (
                   <button
@@ -363,7 +372,7 @@ export default function TambahTransaksi() {
                       }`}
                   >
                     <span className="text-2xl leading-none drop-shadow-sm mb-1">{getEmoji(m)}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-wide ${mood === m ? 'text-[#E4F087]' : 'text-black'}`}>{m}</span>
+                    <span className={`text-[9px] font-black uppercase tracking-wide ${mood === m ? 'text-[#E4F087]' : 'text-black'}`}>{getTranslatedMoodLabel(m)}</span>
                   </button>
                 );
               })}
@@ -388,7 +397,7 @@ export default function TambahTransaksi() {
             disabled={isPending}
             className={clsx("disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed w-full mt-6 py-4 bg-[#E4F087] text-black border-4 border-black font-black text-sm uppercase rounded-2xl shadow-[4px_4px_0_0_#000] hover:bg-[#d4e076] transition-transform active:translate-y-[4px] active:translate-x-[4px] active:shadow-none", isPending && "cursor-not-allowed")}
           >
-            {isPending ? "Menyimpan..." : "Simpan Transaksi"}
+            {isPending ? t("menyimpan") : t("simpan_transaksi")}
           </button>
 
         </div>

@@ -4,6 +4,7 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getWeeklyReport } from "@/lib/laporan-data";
+import { useLanguage } from "@/components/language-provider";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -17,6 +18,7 @@ const KATEGORI_LIST = [
 export default function LaporanMingguan() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
     totalPengeluaran: number;
@@ -25,6 +27,26 @@ export default function LaporanMingguan() {
     kategori: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
+
+  const translateKategori = (val: string) => {
+    if (val === "Makanan") return t("opt_makanan");
+    if (val === "Transportasi") return t("opt_transportasi");
+    if (val === "Belanja") return t("opt_belanja");
+    if (val === "Tagihan") return t("opt_tagihan");
+    if (val === "Pemasukan") return t("opt_pemasukan");
+    return t("opt_lainnya");
+  };
+
+  const translateDay = (day: string) => {
+    if (day === "Sen") return t("day_sen");
+    if (day === "Sel") return t("day_sel");
+    if (day === "Rab") return t("day_rab");
+    if (day === "Kam") return t("day_kam");
+    if (day === "Jum") return t("day_jum");
+    if (day === "Sab") return t("day_sab");
+    if (day === "Min") return t("day_min");
+    return day;
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -46,13 +68,13 @@ export default function LaporanMingguan() {
     return (
       <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
         <div className="w-16 h-16 border-8 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 font-black uppercase text-xs">Memuat Data Laporan...</p>
+        <p className="mt-4 font-black uppercase text-xs">{t("memuat_laporan")}</p>
       </div>
     );
   }
 
   const currentWeekData = reportData || {
-    periode: "Memuat...",
+    periode: t("menyimpan") === "Saving..." ? "Loading..." : "Memuat...",
     totalPengeluaran: 0,
     totalPemasukan: 0,
     grafik: [
@@ -80,7 +102,7 @@ export default function LaporanMingguan() {
         <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black uppercase">Mingguan</h1>
+        <h1 className="text-xl font-black text-black uppercase">{t("mingguan")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -99,9 +121,9 @@ export default function LaporanMingguan() {
           <div className="flex flex-col items-center">
             <span className="font-black text-sm uppercase">{currentWeekData.periode}</span>
             {weekOffset === 0 ? (
-              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">Minggu Ini</span>
+              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">{t("minggu_ini")}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(weekOffset)} minggu lalu</span>
+              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(weekOffset)} {t("minggu_lalu")}</span>
             )}
           </div>
 
@@ -117,11 +139,11 @@ export default function LaporanMingguan() {
         {/* Ringkasan */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#FF7676] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">Pengeluaran</span>
+            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
           </div>
           <div className="bg-[#60D689] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">Pemasukan</span>
+            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
           </div>
         </div>
@@ -129,7 +151,7 @@ export default function LaporanMingguan() {
         {/* Bar Chart CSS */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
-            Grafik Pengeluaran
+            {t("grafik_pengeluaran")}
             <span className="text-xl">📉</span>
           </h2>
 
@@ -149,58 +171,58 @@ export default function LaporanMingguan() {
                   </div>
                 </div>
                 <span className={`text-[10px] font-black uppercase ${d.hari === "Min" || d.hari === "Sab" ? "text-[#FF7676]" : "text-black"}`}>
-                  {d.hari}
+                  {translateDay(d.hari)}
                 </span>
               </div>
             ))}
           </div>
 
           <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
-            <span>Rata-rata Pengeluaran</span>
-            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 7).toLocaleString('id-ID')} / hari</span>
+            <span>{t("rata_rata_pengeluaran")}</span>
+            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 7).toLocaleString('id-ID')} / {t("hari")}</span>
           </div>
         </div>
-      </div>
 
-      {/* Rincian Kategori */}
-      <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
-        <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
-          Rincian Kategori
-          <span className="text-xl">🍔</span>
-        </h2>
+        {/* Rincian Kategori */}
+        <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
+          <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
+            {t("rincian_kategori")}
+            <span className="text-xl">🍔</span>
+          </h2>
 
-        <div className="flex flex-col gap-4">
-          {currentWeekData.kategori.length === 0 ? (
-            <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-              Belum ada pengeluaran di minggu ini
-            </div>
-          ) : (
-            currentWeekData.kategori.map((kat) => {
-              const info = KATEGORI_LIST.find(k => k.id === kat.id);
-              if (!info) return null;
-              const persen = totalPengeluaran > 0 ? (kat.total / totalPengeluaran) * 100 : 0;
+          <div className="flex flex-col gap-4">
+            {currentWeekData.kategori.length === 0 ? (
+              <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
+                {t("belum_ada_pengeluaran_minggu_ini")}
+              </div>
+            ) : (
+              currentWeekData.kategori.map((kat) => {
+                const info = KATEGORI_LIST.find(k => k.id === kat.id);
+                if (!info) return null;
+                const persen = totalPengeluaran > 0 ? (kat.total / totalPengeluaran) * 100 : 0;
 
-              return (
-                <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
-                  <div className="flex justify-between items-center text-xs font-bold text-black">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#FDF8EE] border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]">
-                        {info.icon}
-                      </span>
-                      <span className="uppercase">{info.label}</span>
+                return (
+                  <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
+                    <div className="flex justify-between items-center text-xs font-bold text-black">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-[#FDF8EE] border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]">
+                          {info.icon}
+                        </span>
+                        <span className="uppercase">{translateKategori(info.id)}</span>
+                      </div>
+                      <span>Rp {kat.total.toLocaleString('id-ID')}</span>
                     </div>
-                    <span>Rp {kat.total.toLocaleString('id-ID')}</span>
+                    <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
+                      <div className="h-full bg-[#FFB443] border-r-2 border-black" style={{ width: `${Math.min(persen, 100)}%` }}></div>
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
-                    <div className="h-full bg-[#FFB443] border-r-2 border-black" style={{ width: `${Math.min(persen, 100)}%` }}></div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }

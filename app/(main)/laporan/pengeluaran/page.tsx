@@ -4,6 +4,7 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiTrendingDown } from "reac
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getExpenseReport } from "@/lib/laporan-data";
+import { useLanguage } from "@/components/language-provider";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -16,12 +17,22 @@ const KATEGORI_LIST = [
 export default function LaporanPengeluaran() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
     totalPengeluaran: number;
     kategori: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
+
+  const translateKategori = (val: string) => {
+    if (val === "Makanan") return t("opt_makanan");
+    if (val === "Transportasi") return t("opt_transportasi");
+    if (val === "Belanja") return t("opt_belanja");
+    if (val === "Tagihan") return t("opt_tagihan");
+    if (val === "Pemasukan") return t("opt_pemasukan");
+    return t("opt_lainnya");
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -43,13 +54,13 @@ export default function LaporanPengeluaran() {
     return (
       <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
         <div className="w-16 h-16 border-8 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 font-black uppercase text-xs">Memuat Data Laporan...</p>
+        <p className="mt-4 font-black uppercase text-xs">{t("memuat_laporan")}</p>
       </div>
     );
   }
 
   const currentMonthData = reportData || {
-    periode: "Memuat...",
+    periode: t("menyimpan") === "Saving..." ? "Loading..." : "Memuat...",
     totalPengeluaran: 0,
     kategori: [],
     hasOlderData: false,
@@ -76,6 +87,8 @@ export default function LaporanPengeluaran() {
     ? `conic-gradient(${pieGradientStops})` 
     : `conic-gradient(#E4E7EB 0% 100%)`;
 
+  const totalKategoriLabels = t("total_kategori_caps").split("\n");
+
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
 
@@ -84,7 +97,7 @@ export default function LaporanPengeluaran() {
         <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black uppercase">Pengeluaran</h1>
+        <h1 className="text-xl font-black text-black uppercase">{t("pengeluaran")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -103,9 +116,9 @@ export default function LaporanPengeluaran() {
           <div className="flex flex-col items-center">
             <span className="font-black text-sm uppercase">{currentMonthData.periode}</span>
             {monthOffset === 0 ? (
-              <span className="text-[10px] font-bold text-[#60D689] bg-[#60D689]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#60D689]">Bulan Ini</span>
+              <span className="text-[10px] font-bold text-[#60D689] bg-[#60D689]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#60D689]">{t("bulan_ini")}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} bulan lalu</span>
+              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} {t("bulan_lalu")}</span>
             )}
           </div>
 
@@ -121,7 +134,7 @@ export default function LaporanPengeluaran() {
         {/* Ringkasan Total Pengeluaran */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0_0_#000] flex flex-col items-center justify-center text-center mt-2">
            <span className="text-[10px] font-bold uppercase bg-[#FF7676] px-3 py-1.5 border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] mb-3 flex items-center gap-1.5">
-             <FiTrendingDown className="w-3 h-3" /> Total Pengeluaran
+             <FiTrendingDown className="w-3 h-3" /> {t("total_pengeluaran")}
            </span>
            <div className="flex items-start">
              <span className="text-xl font-black mt-1 mr-1">Rp</span>
@@ -133,7 +146,7 @@ export default function LaporanPengeluaran() {
 
         {/* Pie Chart / Donut Chart Neo-Brutalist */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center mt-2">
-           <h2 className="text-sm font-black uppercase w-full text-center mb-6">Proporsi Kategori</h2>
+           <h2 className="text-sm font-black uppercase w-full text-center mb-6">{t("proporsi_kategori")}</h2>
            <div 
              className="w-48 h-48 rounded-full border-4 border-black shadow-[4px_4px_0_0_#000] relative transition-transform active:scale-95 duration-300"
              style={{ background: pieChartBackground }}
@@ -141,7 +154,9 @@ export default function LaporanPengeluaran() {
              {/* Center hole for Donut Chart effect */}
              <div className="absolute inset-0 m-auto w-24 h-24 bg-white rounded-full border-4 border-black flex flex-col items-center justify-center shadow-inner">
                <span className="text-2xl">🍔</span>
-               <span className="text-[10px] font-black uppercase mt-1 text-center leading-tight">Total<br/>Kategori</span>
+               <span className="text-[10px] font-black uppercase mt-1 text-center leading-tight">
+                 {totalKategoriLabels[0]}<br/>{totalKategoriLabels[1] || ""}
+               </span>
              </div>
            </div>
         </div>
@@ -149,14 +164,14 @@ export default function LaporanPengeluaran() {
         {/* Rincian Berdasarkan Kategori (Horizontal Bar Chart) */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000] mt-2">
            <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-5">
-             Rincian Kategori
+             {t("rincian_kategori")}
              <span className="text-xl">🧾</span>
            </h2>
 
            <div className="flex flex-col gap-6">
               {currentMonthData.kategori.length === 0 ? (
                 <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                  Belum ada pengeluaran di bulan ini
+                  {t("belum_ada_pengeluaran_bulan_ini")}
                 </div>
               ) : (
                 currentMonthData.kategori.map((kat, index) => {
@@ -180,15 +195,15 @@ export default function LaporanPengeluaran() {
                               >
                                 {info.icon}
                               </span>
-                              <span className="uppercase">{info.label}</span>
+                              <span className="uppercase">{translateKategori(info.id)}</span>
                            </div>
                            <div className="flex flex-col items-end">
                               <span>Rp {kat.total.toLocaleString('id-ID')}</span>
-                              <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% dari total</span>
+                              <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% {t("dari_total")}</span>
                            </div>
                         </div>
                         
-                        {/* Bar Horizontal Neo Brutalist yang Rapih */}
+                        {/* Bar Horizontal Neo Brutalist */}
                         <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
                            <div 
                              className="h-full border-r-2 border-black transition-all duration-500 ease-out" 

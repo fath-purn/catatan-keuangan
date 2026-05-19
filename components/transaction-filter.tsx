@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useLanguage } from "@/components/language-provider";
 
 export function TransactionTypeTabs() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
+  const { t } = useLanguage();
 
   const currentJenis = searchParams.get("jenis") || "Semua";
 
@@ -21,20 +23,26 @@ export function TransactionTypeTabs() {
     replace(`${pathname}?${params.toString()}`);
   };
 
+  const getLabel = (k: string) => {
+    if (k === "Semua") return t("opt_semua");
+    if (k === "Pemasukan") return t("opt_pemasukan");
+    return t("opt_pengeluaran");
+  };
+
   return (
     <div className="flex gap-1 bg-[#FDF8EE] p-1.5 rounded-2xl border-2 border-black shadow-inner">
-      {["Semua", "Pemasukan", "Pengeluaran"].map((t) => {
-        const isActive = currentJenis === t || (currentJenis === "" && t === "Semua");
+      {["Semua", "Pemasukan", "Pengeluaran"].map((tKey) => {
+        const isActive = currentJenis === tKey || (currentJenis === "" && tKey === "Semua");
         return (
           <button
-            key={t}
-            onClick={() => handleTabClick(t)}
+            key={tKey}
+            onClick={() => handleTabClick(tKey)}
             className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${isActive
               ? "bg-black text-[#E4F087] shadow-[2px_2px_0_0_rgba(0,0,0,0.2)]"
               : "text-black/60 hover:bg-black/5"
               }`}
           >
-            {t}
+            {getLabel(tKey)}
           </button>
         );
       })}
@@ -46,6 +54,7 @@ export function TransactionTimeFilter() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
+  const { t } = useLanguage();
 
   const [showPicker, setShowPicker] = useState(false);
   const date = new Date();
@@ -58,11 +67,14 @@ export function TransactionTimeFilter() {
 
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
-  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const indonesianMonths = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  
+  const currentMonthNames = t("opt_semua") === "All" ? englishMonths : indonesianMonths;
 
   const getDisplayText = () => {
-    if (!currentBulanParam || !currentTahunParam) return "Semua Bulan";
-    return `${monthNames[currentMonth]} ${currentYear}`;
+    if (!currentBulanParam || !currentTahunParam) return t("semua_bulan");
+    return `${currentMonthNames[currentMonth]} ${currentYear}`;
   };
 
   const handleSelectMonth = (monthIndex: number) => {
@@ -104,7 +116,7 @@ export function TransactionTimeFilter() {
           <div className="relative z-10 bg-white w-full max-w-sm rounded-[32px] border-4 border-black shadow-[8px_8px_0_0_#000] p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
 
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-black text-black text-xl uppercase">Filter Waktu</h3>
+              <h3 className="font-black text-black text-xl uppercase">{t("filter_waktu")}</h3>
               <button
                 onClick={() => setShowPicker(false)}
                 className="w-8 h-8 flex items-center justify-center bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform"
@@ -132,7 +144,7 @@ export function TransactionTimeFilter() {
 
             {/* Grid Bulan */}
             <div className="grid grid-cols-3 gap-3">
-              {monthNames.map((m, i) => {
+              {currentMonthNames.map((m, i) => {
                 const isSelected = i === currentMonth && selectedYear === currentYear && currentBulanParam;
                 return (
                   <button
@@ -153,7 +165,7 @@ export function TransactionTimeFilter() {
               onClick={handleReset}
               className="mt-2 w-full py-3 rounded-xl text-xs font-black text-black bg-gray-200 border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-gray-300 transition-colors active:scale-95"
             >
-              Semua Bulan (Reset)
+              {t("semua_bulan_reset")}
             </button>
           </div>
         </div>
@@ -161,36 +173,6 @@ export function TransactionTimeFilter() {
     </>
   );
 }
-
-const KATEGORI_LIST = [
-  { id: "Makanan", icon: "🍔", label: "Makanan & Minuman" },
-  { id: "Transportasi", icon: "🚗", label: "Transportasi" },
-  { id: "Hiburan", icon: "🎮", label: "Hiburan" },
-  { id: "Belanja", icon: "🛍️", label: "Belanja" },
-  { id: "Tagihan", icon: "🧾", label: "Tagihan & Utilitas" },
-  { id: "Lainnya", icon: "📦", label: "Lainnya" },
-];
-
-const MOOD_LIST = [
-  { id: "Senang", icon: "😊", label: "Senang" },
-  { id: "Biasa", icon: "😐", label: "Biasa" },
-  { id: "Sedih", icon: "😢", label: "Sedih" },
-  { id: "Marah", icon: "😡", label: "Marah" },
-];
-
-const SORT_LIST = [
-  { id: "terbaru", icon: "🗓️", label: "Terbaru (Menurun)" },
-  { id: "terlama", icon: "🗓️", label: "Terlama (Menaik)" },
-  { id: "tertinggi", icon: "💰", label: "Nominal Tertinggi" },
-  { id: "terendah", icon: "💰", label: "Nominal Terendah" },
-];
-
-const KEPERLUAN_LIST = [
-  { id: "Goals", icon: "🎯", label: "Goals" },
-  { id: "Impulsif", icon: "🛍️", label: "Impulsif" },
-  { id: "Kebutuhan", icon: "🛒", label: "Kebutuhan" },
-  { id: "Emergency", icon: "🆘", label: "Emergency" },
-];
 
 // Komponen Select Kustom
 function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty = false }: any) {
@@ -251,6 +233,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
+  const { t } = useLanguage();
 
   const [kategori, setKategori] = useState(searchParams.get("kategori") || "");
   const [mood, setMood] = useState(searchParams.get("mood") || "");
@@ -259,6 +242,36 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
   const [keperluan, setKeperluan] = useState(searchParams.get("keperluan") || "");
 
   const isFilterActive = !!searchParams.get("kategori") || !!searchParams.get("mood") || !!searchParams.get("jenis") || !!searchParams.get("keperluan") || (searchParams.get("sort") && searchParams.get("sort") !== "terbaru");
+
+  const translatedKategoriList = [
+    { id: "Makanan", icon: "🍔", label: t("opt_makanan") },
+    { id: "Transportasi", icon: "🚗", label: t("opt_transportasi") },
+    { id: "Hiburan", icon: "🎮", label: t("opt_hiburan") },
+    { id: "Belanja", icon: "🛍️", label: t("opt_belanja") },
+    { id: "Tagihan", icon: "🧾", label: t("opt_tagihan") },
+    { id: "Lainnya", icon: "📦", label: t("opt_lainnya") },
+  ];
+
+  const translatedMoodList = [
+    { id: "Senang", icon: "😊", label: t("opt_senang") },
+    { id: "Biasa", icon: "😐", label: t("opt_biasa") },
+    { id: "Sedih", icon: "😢", label: t("opt_sedih") },
+    { id: "Marah", icon: "😡", label: t("opt_marah") },
+  ];
+
+  const translatedKeperluanList = [
+    { id: "Goals", icon: "🎯", label: t("opt_goals") },
+    { id: "Impulsif", icon: "🛍️", label: t("opt_impulsif") },
+    { id: "Kebutuhan", icon: "🛒", label: t("opt_kebutuhan") },
+    { id: "Emergency", icon: "🆘", label: t("opt_emergency") },
+  ];
+
+  const translatedSortList = [
+    { id: "terbaru", icon: "🗓️", label: t("opt_terbaru") },
+    { id: "terlama", icon: "🗓️", label: t("opt_terlama") },
+    { id: "tertinggi", icon: "💰", label: t("opt_tertinggi") },
+    { id: "terendah", icon: "💰", label: t("opt_terendah") },
+  ];
 
   const handleApply = () => {
     const params = new URLSearchParams(searchParams);
@@ -312,7 +325,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
           <div className="relative z-10 bg-white w-full max-w-sm rounded-[32px] border-4 border-black shadow-[8px_8px_0_0_#000] p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200">
 
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-black text-black text-xl uppercase">Filter Transaksi</h3>
+              <h3 className="font-black text-black text-xl uppercase">{t("filter_transaksi")}</h3>
               <button
                 onClick={() => setIsOpen(false)}
                 className="w-8 h-8 flex items-center justify-center bg-[#FF7676] border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform"
@@ -323,40 +336,39 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
 
             <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto no-scrollbar pb-2">
 
-              {/* Jenis Transaksi */}
               {/* Kategori - Custom Select */}
               <CustomSelect
-                label="Kategori"
+                label={t("kategori")}
                 value={kategori}
                 onChange={setKategori}
-                options={KATEGORI_LIST}
-                defaultText="Semua Kategori"
+                options={translatedKategoriList}
+                defaultText={t("opt_semua_kategori")}
               />
 
               {/* Mood - Custom Select */}
               <CustomSelect
-                label="Mood"
+                label={t("mood")}
                 value={mood}
                 onChange={setMood}
-                options={MOOD_LIST}
-                defaultText="Semua Mood"
+                options={translatedMoodList}
+                defaultText={t("opt_semua_mood")}
               />
 
               {/* Keperluan - Custom Select */}
               <CustomSelect
-                label="Keperluan"
+                label={t("keperluan")}
                 value={keperluan}
                 onChange={setKeperluan}
-                options={KEPERLUAN_LIST}
-                defaultText="Semua Keperluan"
+                options={translatedKeperluanList}
+                defaultText={t("opt_semua_keperluan")}
               />
 
               {/* Urutkan - Custom Select */}
               <CustomSelect
-                label="Urutkan"
+                label={t("urutkan")}
                 value={sort}
                 onChange={setSort}
-                options={SORT_LIST}
+                options={translatedSortList}
                 defaultText=""
                 hideEmpty={true}
               />
@@ -368,13 +380,13 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
                 onClick={handleReset}
                 className="w-1/3 py-3 rounded-xl text-xs font-black text-black bg-gray-200 border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-gray-300 transition-colors active:scale-95"
               >
-                Reset
+                {t("reset")}
               </button>
               <button
                 onClick={handleApply}
                 className="w-2/3 py-3 rounded-xl text-xs font-black text-black bg-[#E4F087] border-2 border-black shadow-[2px_2px_0_0_#000] hover:bg-[#d4e076] transition-colors active:scale-95"
               >
-                Terapkan
+                {t("terapkan")}
               </button>
             </div>
 

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { startOfMonth, endOfMonth, subDays } from "date-fns";
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { translations, Locale } from "@/lib/translations";
 
 const indonesianDays = [
   "Minggu",
@@ -27,6 +29,30 @@ const indonesianMonthsFull = [
   "Oktober",
   "November",
   "Desember",
+];
+
+const englishDays = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const englishMonthsFull = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 // Helper to format number to "1.250.000" style
@@ -71,6 +97,10 @@ export async function getUserGoals() {
 const getCachedTransactionsData = unstable_cache(
   async (userId: string, optionsStr: string) => {
     const options = JSON.parse(optionsStr);
+    const locale = (options?.locale || "id") as Locale;
+    const days = locale === "en" ? englishDays : indonesianDays;
+    const months = locale === "en" ? englishMonthsFull : indonesianMonthsFull;
+
     const search = options?.search;
     const jenis = options?.jenis;
     const bulan = options?.bulan;
@@ -172,8 +202,8 @@ const getCachedTransactionsData = unstable_cache(
           groups[dateKey] = {
             id: dateKey,
             tanggal: dateObj.getDate().toString(),
-            hari: indonesianDays[dateObj.getDay()],
-            bulan: indonesianMonthsFull[dateObj.getMonth()],
+            hari: days[dateObj.getDay()],
+            bulan: months[dateObj.getMonth()],
             tahun: dateObj.getFullYear().toString(),
             totalPendapatan: 0,
             totalPengeluaran: 0,
@@ -247,14 +277,17 @@ export async function getTransactionsData(options?: {
   if (!session || !session.user || !session.user.id) {
     return [];
   }
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value || "id") as Locale;
+
   return getCachedTransactionsData(
     session.user.id,
-    JSON.stringify(options || {}),
+    JSON.stringify({ ...(options || {}), locale }),
   );
 }
 
 const getCachedDashboardData = unstable_cache(
-  async (userId: string) => {
+  async (userId: string, locale: Locale) => {
     try {
       // 1. Fetch user custom targetGayaHidup
       const user = await prisma.user.findUnique({
@@ -317,7 +350,8 @@ const getCachedDashboardData = unstable_cache(
         const formatGoalAmount = (val: number) => {
           if (val >= 1000000) {
             const formatted = (val / 1000000).toFixed(1);
-            return `Rp ${formatted.endsWith(".0") ? formatted.slice(0, -2) : formatted}jt`;
+            const suffix = locale === "en" ? "m" : "jt";
+            return `Rp ${formatted.endsWith(".0") ? formatted.slice(0, -2) : formatted}${suffix}`;
           }
           return `Rp ${formatNumber(val)}`;
         };
@@ -336,7 +370,7 @@ const getCachedDashboardData = unstable_cache(
       // 5. Get latest grouped transactions
       const recentTransactionsGrouped = await getCachedTransactionsData(
         userId,
-        JSON.stringify({}),
+        JSON.stringify({ locale }),
       );
 
       // 6. Dynamic Smart Notifications
@@ -349,15 +383,20 @@ const getCachedDashboardData = unstable_cache(
       if (persenPengeluaran >= 100) {
         notifications.push({
           id: "overspending-critical",
-          title: "⚠️ Limit Jebol!",
-          message: `Waduh! Pengeluaran bulananmu (Rp ${formatNumber(totalPengeluaranMonth)}) sudah MELEBIHI target gaya hidupmu (Rp ${formatNumber(limitGayaHidup)}). Yuk, stop jajan impulsif! 💸`,
+          title: translations[locale].overspending_crit_title,
+          message: translations[locale].overspending_crit_msg
+            .replace("{expense}", formatNumber(totalPengeluaranMonth))
+            .replace("{limit}", formatNumber(limitGayaHidup)),
           type: "danger",
         });
       } else if (persenPengeluaran >= 80) {
         notifications.push({
           id: "overspending-warning",
-          title: "⚠️ Peringatan Pengeluaran!",
-          message: `Awas! Pengeluaranmu sudah mencapai ${Math.round(persenPengeluaran)}% dari target gaya hidup (Rp ${formatNumber(totalPengeluaranMonth)} / Rp ${formatNumber(limitGayaHidup)}). Hemat-hemat ya! 🛒`,
+          title: translations[locale].overspending_warn_title,
+          message: translations[locale].overspending_warn_msg
+            .replace("{percent}", String(Math.round(persenPengeluaran)))
+            .replace("{expense}", formatNumber(totalPengeluaranMonth))
+            .replace("{limit}", formatNumber(limitGayaHidup)),
           type: "warning",
         });
       }
@@ -371,15 +410,18 @@ const getCachedDashboardData = unstable_cache(
         if (persenGoal >= 100) {
           notifications.push({
             id: `goal-complete-${latestGoal.id}`,
-            title: "🎯 Goal Tercapai!",
-            message: `Selamat! Tabungan untuk target "${latestGoal.nama}" sudah terkumpul 100%! Impianmu resmi tercapai! 🥳`,
+            title: translations[locale].goal_complete_title,
+            message: translations[locale].goal_complete_msg
+              .replace("{nama}", latestGoal.nama),
             type: "success",
           });
         } else if (persenGoal >= 85) {
           notifications.push({
             id: `goal-close-${latestGoal.id}`,
-            title: "🎯 Hampir Tercapai!",
-            message: `Keren! Tabungan "${latestGoal.nama}" sudah mencapai ${Math.round(persenGoal)}% terkumpul. Tinggal sedikit lagi! 💪`,
+            title: translations[locale].goal_close_title,
+            message: translations[locale].goal_close_msg
+              .replace("{nama}", latestGoal.nama)
+              .replace("{percent}", String(Math.round(persenGoal))),
             type: "info",
           });
         }
@@ -390,8 +432,8 @@ const getCachedDashboardData = unstable_cache(
       monthTrx.forEach((t) => {
         if (
           !t.jenis_transaksi &&
-          ["Sedih", "Marah", "Cemas", "Lelah"].includes(t.mood || "") &&
-          ["Jajan", "Belanja", "Hiburan", "Lainnya"].includes(t.kategori || "")
+          ["Sedih", "Marah", "Cemas", "Lelah", "Sad", "Angry", "Anxious", "Tired"].includes(t.mood || "") &&
+          ["Jajan", "Belanja", "Hiburan", "Lainnya", "Food", "Shopping", "Entertainment", "Others"].includes(t.kategori || "")
         ) {
           totalMoodSpent += t.nominal;
         }
@@ -399,8 +441,9 @@ const getCachedDashboardData = unstable_cache(
       if (totalMoodSpent > 0) {
         notifications.push({
           id: "impulsive-mood-buying",
-          title: "🛍️ Mood Buying Terdeteksi!",
-          message: `Bulan ini kamu sudah membelanjakan Rp ${formatNumber(totalMoodSpent)} saat mood sedang sedih, marah, cemas, atau lelah. Belanja saat emosi kurang stabil bisa bikin dompet ikut menangis, yuk salurkan ke kegiatan positif lain! 🥺`,
+          title: translations[locale].mood_buying_title,
+          message: translations[locale].mood_buying_msg
+            .replace("{amount}", formatNumber(totalMoodSpent)),
           type: "warning",
         });
       }
@@ -417,8 +460,10 @@ const getCachedDashboardData = unstable_cache(
       if (largestTrx && largestTrx.nominal >= 1500000) {
         notifications.push({
           id: `giant-expense-${largestTrx.id}`,
-          title: "🦖 Pengeluaran Raksasa!",
-          message: `Waduh! Ada pengeluaran tunggal yang cukup besar bulan ini untuk "${largestTrx.judul}" sebesar Rp ${formatNumber(largestTrx.nominal)}. Pastikan pengeluaran ini memang terencana dengan matang ya, Kak! 💸`,
+          title: translations[locale].giant_expense_title,
+          message: translations[locale].giant_expense_msg
+            .replace("{judul}", largestTrx.judul)
+            .replace("{amount}", formatNumber(largestTrx.nominal)),
           type: "danger",
         });
       }
@@ -427,15 +472,19 @@ const getCachedDashboardData = unstable_cache(
       if (totalPendapatanMonth > 0 && totalPengeluaranMonth > totalPendapatanMonth) {
         notifications.push({
           id: "cashflow-deficit",
-          title: "📉 Arus Kas Defisit!",
-          message: `Bahaya! Bulan ini pengeluaranmu (Rp ${formatNumber(totalPengeluaranMonth)}) sudah MELEBIHI pemasukanmu (Rp ${formatNumber(totalPendapatanMonth)}). Selisih minus sebesar Rp ${formatNumber(totalPengeluaranMonth - totalPendapatanMonth)}. Segera kendalikan pengeluaranmu! 🛑`,
+          title: translations[locale].cashflow_deficit_title,
+          message: translations[locale].cashflow_deficit_msg
+            .replace("{expense}", formatNumber(totalPengeluaranMonth))
+            .replace("{income}", formatNumber(totalPendapatanMonth))
+            .replace("{deficit}", formatNumber(totalPengeluaranMonth - totalPendapatanMonth)),
           type: "danger",
         });
       } else if (totalPendapatanMonth > 0 && totalPengeluaranMonth > 0 && (totalPengeluaranMonth / totalPendapatanMonth) <= 0.4) {
         notifications.push({
           id: "super-saving-ratio",
-          title: "🏆 Keuangan Super Sehat!",
-          message: `Luar biasa! Pengeluaranmu bulan ini baru terpakai ${Math.round((totalPengeluaranMonth / totalPendapatanMonth) * 100)}% dari pemasukan. Kamu sukses menyisihkan lebih dari 60% pendapatan untuk ditabung! Keren banget Kak! 🌟`,
+          title: translations[locale].super_saving_title,
+          message: translations[locale].super_saving_msg
+            .replace("{percent}", String(Math.round((totalPengeluaranMonth / totalPendapatanMonth) * 100))),
           type: "success",
         });
       }
@@ -445,8 +494,8 @@ const getCachedDashboardData = unstable_cache(
       if ([0, 5, 6].includes(currentDay)) {
         notifications.push({
           id: "weekend-spending-warning",
-          title: "🍕 Self-Reward Akhir Pekan!",
-          message: "Selamat berakhir pekan! Self reward itu boleh banget Kak, tapi pastikan tetap terkontrol agar saldo dompetmu tetap bahagia di hari Senin nanti! 😉",
+          title: translations[locale].weekend_warning_title,
+          message: translations[locale].weekend_warning_msg,
           type: "info",
         });
       }
@@ -454,14 +503,13 @@ const getCachedDashboardData = unstable_cache(
       // SCENARIO 7: General Finance Tip
       notifications.push({
         id: "daily-tip",
-        title: "💡 Tips Keuangan Cerdas",
-        message:
-          "Catat setiap pengeluaran kecil (seperti parkir & uang receh) agar keuanganmu lebih transparan dan terkontrol! 📝",
+        title: translations[locale].tip_title,
+        message: translations[locale].tip_msg,
         type: "tip",
       });
 
       return {
-        name: user?.name || "Kakak Cantik",
+        name: user?.name || (locale === "en" ? "Dear User" : "Kakak Cantik"),
         avatar: user?.avatar,
         dompet: {
           saldo: `Rp ${formatNumber(totalSaldo)}`,
@@ -476,7 +524,7 @@ const getCachedDashboardData = unstable_cache(
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       return {
-        name: "Kakak Cantik",
+        name: locale === "en" ? "Dear User" : "Kakak Cantik",
         avatar: "👦🏻",
         dompet: {
           saldo: "Rp 0",
@@ -512,7 +560,9 @@ export async function getDashboardData() {
       notifications: [],
     };
   }
-  return getCachedDashboardData(session.user.id);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedDashboardData(session.user.id, locale);
 }
 
 // REVALIDATE EXPORTS

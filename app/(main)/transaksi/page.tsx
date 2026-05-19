@@ -5,6 +5,8 @@ import TransactionFilter, { TransactionTypeTabs, TransactionTimeFilter } from "@
 import Search from "@/components/search";
 import { getTransactionsData } from "@/lib/data";
 import TransactionListClient from "@/components/transaction-list-client";
+import { cookies } from "next/headers";
+import { translations, Locale } from "@/lib/translations";
 
 interface TransaksiPageProps {
   searchParams?: Promise<{
@@ -19,7 +21,11 @@ interface TransaksiPageProps {
   }>;
 }
 
-export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
+export default async function TransaksiPage({ searchParams }: TransaksiPageProps) {
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value || "id") as Locale;
+  const t = translations[locale];
+
   return (
     <div className="min-h-full bg-[#FDF8EE] relative font-sans text-black">
 
@@ -27,8 +33,8 @@ export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
       <div className="bg-[#86B6F6] px-5 pt-8 pb-4 relative z-10">
         <div className="flex justify-between items-center">
           <div className="flex flex-col text-white drop-shadow-md">
-            <h1 className="text-3xl font-black mb-1">Semua Transaksi</h1>
-            <p className="text-xs font-bold opacity-90 tracking-wide">Kelola transaksi kamu di sini</p>
+            <h1 className="text-3xl font-black mb-1">{t.semua_transaksi}</h1>
+            <p className="text-xs font-bold opacity-90 tracking-wide">{t.kelola_transaksi_di_sini}</p>
           </div>
           <div className="text-5xl drop-shadow-lg translate-y-2">
             🐻❄️
@@ -40,7 +46,7 @@ export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
       <div className="sticky top-0 z-[90] bg-[#86B6F6] px-5 pb-8 pt-2 rounded-b-[40px] border-b-4 border-black shadow-[0_8px_0_0_#000] -mt-[1px]">
         {/* Search Bar */}
         <Suspense fallback={<div className="bg-white/20 border-2 border-transparent rounded-2xl flex items-center px-4 py-3 h-[48px] animate-pulse w-full"></div>}>
-          <Search placeholder="Cari transaksi..." />
+          <Search placeholder={t.cari_transaksi} />
         </Suspense>
       </div>
 
@@ -56,7 +62,7 @@ export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
 
           {/* Filter Waktu */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">Filter Waktu</label>
+            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">{t.filter_waktu}</label>
             <Suspense fallback={<div className="h-[42px] bg-white border-2 border-black rounded-xl animate-pulse"></div>}>
               <TransactionTimeFilter />
             </Suspense>
@@ -64,11 +70,11 @@ export default function TransaksiPage({ searchParams }: TransaksiPageProps) {
 
           {/* Filter Kategori / Lanjutan */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">Filter Kategori & Lanjutan</label>
+            <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">{t.filter_kategori_lanjutan}</label>
             <Suspense fallback={<div className="bg-black text-[#E4F087] border-2 border-black rounded-xl px-5 py-3 w-32 h-[42px] animate-pulse"></div>}>
               <TransactionFilter
                 triggerClassName="bg-black text-[#E4F087] border-2 border-black rounded-xl px-5 py-3 text-xs font-black shadow-[2px_2px_0_0_#000] flex items-center justify-center gap-2 active:scale-95 transition-transform w-fit relative"
-                triggerContent={<><span className="text-base leading-none">💰</span> Filter Lengkap</>}
+                triggerContent={<><span className="text-base leading-none">💰</span> {t.filter_lengkap}</>}
               />
             </Suspense>
           </div>

@@ -5,18 +5,38 @@ import { FiArrowDown, FiArrowUp } from "react-icons/fi";
 import Link from "next/link";
 import TransactionDetailModal from "@/components/transaction-detail-modal";
 import { FullTransaction, Transaction } from "@/types/props";
+import { useLanguage } from "@/components/language-provider";
 
 export default function TransactionListClient({ data }: { data: FullTransaction[] }) {
   const [selectedTrx, setSelectedTrx] = useState<Transaction | null>(null);
+  const { t } = useLanguage();
+
+  const translateKeperluan = (val: string) => {
+    if (val === "Goals") return t("opt_goals");
+    if (val === "Impulsif") return t("opt_impulsif");
+    if (val === "Kebutuhan") return t("opt_kebutuhan");
+    if (val === "Emergency") return t("opt_emergency");
+    return val;
+  };
+
+  const translateKategori = (val: string) => {
+    if (val === "Makanan") return t("opt_makanan");
+    if (val === "Transportasi") return t("opt_transportasi");
+    if (val === "Hiburan") return t("opt_hiburan");
+    if (val === "Belanja") return t("opt_belanja");
+    if (val === "Tagihan") return t("opt_tagihan");
+    if (val === "Lainnya") return t("opt_lainnya");
+    return val;
+  };
 
   if (data.length === 0) {
     return (
       <div className="bg-white border-2 border-black rounded-3xl p-8 shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center text-center gap-2 mt-2">
         <span className="text-6xl drop-shadow-md mb-2">📫</span>
-        <h2 className="text-xl font-black text-black">Belum ada transaksi</h2>
-        <p className="text-xs font-bold text-black/60 mb-5">Yuk mulai catat keuanganmu!</p>
+        <h2 className="text-xl font-black text-black">{t("belum_ada_transaksi")}</h2>
+        <p className="text-xs font-bold text-black/60 mb-5">{t("yuk_mulai_catat")}</p>
         <Link href="/transaksi/tambah" className="bg-[#DBCBFF] border-2 border-black rounded-2xl px-6 py-3.5 text-sm font-black text-black shadow-[4px_4px_0_0_#000] active:scale-95 transition-transform hover:bg-[#C9B3FF]">
-          Tambah Transaksi
+          {t("tambah_transaksi")}
         </Link>
       </div>
     );
@@ -61,7 +81,7 @@ export default function TransactionListClient({ data }: { data: FullTransaction[
                     className={`flex justify-between items-center py-3 px-1 transition-colors hover:bg-black/5 active:bg-black/10 cursor-pointer ${index !== group.data.length - 1 ? 'border-b-2 border-black/10' : ''}`}
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className={`w-12 h-12 border-2 border-black flex items-center justify-center rounded-xl shadow-[2px_2px_0_0_#000] ${trx.jenis_transaksi ? 'bg-[#60D689]' : 'bg-[#FF7676]'}`} title={trx.kategori}>
+                      <div className={`w-12 h-12 border-2 border-black flex items-center justify-center rounded-xl shadow-[2px_2px_0_0_#000] ${trx.jenis_transaksi ? 'bg-[#60D689]' : 'bg-[#FF7676]'}`} title={translateKategori(trx.kategori)}>
                         {trx.jenis_transaksi ? <FiArrowDown className="w-6 h-6 text-black" /> : <FiArrowUp className="w-6 h-6 text-black" />}
                       </div>
 
@@ -72,8 +92,8 @@ export default function TransactionListClient({ data }: { data: FullTransaction[
                         </div>
 
                         <div className="flex items-center gap-1.5 text-[9px] font-bold text-black mt-0.5">
-                          <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{trx.keperluan}</span>
-                          <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{trx.kategori}</span>
+                          <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{translateKeperluan(trx.keperluan)}</span>
+                          <span className="bg-[#FDF8EE] border border-black px-1.5 py-0.5 rounded shadow-[1px_1px_0_0_#000]">{translateKategori(trx.kategori)}</span>
                         </div>
                       </div>
                     </div>

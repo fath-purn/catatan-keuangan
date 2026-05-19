@@ -4,6 +4,7 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiTrendingUp } from "react-
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getIncomeReport } from "@/lib/laporan-data";
+import { useLanguage } from "@/components/language-provider";
 
 const ASET_LIST = [
   { id: "Cash", icon: "💵", label: "Cash" },
@@ -16,12 +17,18 @@ const ASET_LIST = [
 export default function LaporanPemasukan() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
     totalPemasukan: number;
     aset: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
+
+  const translateAset = (val: string) => {
+    if (val === "Cash") return t("opt_semua") === "All" ? "Cash" : "Tunai";
+    return val;
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -43,13 +50,13 @@ export default function LaporanPemasukan() {
     return (
       <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
         <div className="w-16 h-16 border-8 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 font-black uppercase text-xs">Memuat Data Laporan...</p>
+        <p className="mt-4 font-black uppercase text-xs">{t("memuat_laporan")}</p>
       </div>
     );
   }
 
   const currentMonthData = reportData || {
-    periode: "Memuat...",
+    periode: t("menyimpan") === "Saving..." ? "Loading..." : "Memuat...",
     totalPemasukan: 0,
     aset: [],
     hasOlderData: false,
@@ -76,6 +83,8 @@ export default function LaporanPemasukan() {
     ? `conic-gradient(${pieGradientStops})` 
     : `conic-gradient(#E4E7EB 0% 100%)`;
 
+  const totalAsetLabels = t("total_aset_caps").split("\n");
+
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
 
@@ -84,7 +93,7 @@ export default function LaporanPemasukan() {
         <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black uppercase">Pemasukan</h1>
+        <h1 className="text-xl font-black text-black uppercase">{t("pemasukan")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -103,16 +112,16 @@ export default function LaporanPemasukan() {
           <div className="flex flex-col items-center">
             <span className="font-black text-sm uppercase">{currentMonthData.periode}</span>
             {monthOffset === 0 ? (
-              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">Bulan Ini</span>
+              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">{t("bulan_ini")}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} bulan lalu</span>
+              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} {t("bulan_lalu")}</span>
             )}
           </div>
 
           <button
             onClick={() => setMonthOffset(monthOffset + 1)}
             disabled={loading || monthOffset === 0}
-            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || monthOffset === 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
+            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || monthOffset === 0 ? 'bg-gray-100 active:scale-95 hover:bg-gray-200' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
           >
             <FiChevronRight className="w-5 h-5" />
           </button>
@@ -121,7 +130,7 @@ export default function LaporanPemasukan() {
         {/* Ringkasan Total Pemasukan */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0_0_#000] flex flex-col items-center justify-center text-center mt-2">
            <span className="text-[10px] font-bold uppercase bg-[#60D689] px-3 py-1.5 border-2 border-black rounded-xl shadow-[2px_2px_0_0_#000] mb-3 flex items-center gap-1.5">
-             <FiTrendingUp className="w-3 h-3" /> Total Pemasukan
+             <FiTrendingUp className="w-3 h-3" /> {t("total_pemasukan")}
            </span>
            <div className="flex items-start">
              <span className="text-xl font-black mt-1 mr-1">Rp</span>
@@ -133,7 +142,7 @@ export default function LaporanPemasukan() {
 
         {/* Pie Chart / Donut Chart Neo-Brutalist */}
         <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center mt-2">
-           <h2 className="text-sm font-black uppercase w-full text-center mb-6">Proporsi Aset</h2>
+           <h2 className="text-sm font-black uppercase w-full text-center mb-6">{t("proporsi_aset")}</h2>
            <div 
              className="w-48 h-48 rounded-full border-4 border-black shadow-[4px_4px_0_0_#000] relative transition-transform active:scale-95 duration-300"
              style={{ background: pieChartBackground }}
@@ -141,7 +150,9 @@ export default function LaporanPemasukan() {
              {/* Center hole for Donut Chart effect */}
              <div className="absolute inset-0 m-auto w-24 h-24 bg-white rounded-full border-4 border-black flex flex-col items-center justify-center shadow-inner">
                <span className="text-2xl">💰</span>
-               <span className="text-[10px] font-black uppercase mt-1 text-center leading-tight">Total<br/>Aset</span>
+               <span className="text-[10px] font-black uppercase mt-1 text-center leading-tight">
+                 {totalAsetLabels[0]}<br/>{totalAsetLabels[1] || ""}
+               </span>
              </div>
            </div>
         </div>
@@ -149,14 +160,14 @@ export default function LaporanPemasukan() {
         {/* Rincian Berdasarkan Aset (Horizontal Bar Chart) */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000] mt-2">
            <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-5">
-             Rincian Aset
+             {t("rincian_aset")}
              <span className="text-xl">🧾</span>
            </h2>
 
            <div className="flex flex-col gap-6">
               {currentMonthData.aset.length === 0 ? (
                 <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                  Belum ada pemasukan di bulan ini
+                  {t("belum_ada_pemasukan_bulan_ini")}
                 </div>
               ) : (
                 currentMonthData.aset.map((ast, index) => {
@@ -180,11 +191,11 @@ export default function LaporanPemasukan() {
                               >
                                 {info.icon}
                               </span>
-                              <span className="uppercase">{info.label}</span>
+                              <span className="uppercase">{translateAset(info.id)}</span>
                            </div>
                            <div className="flex flex-col items-end">
                               <span>Rp {ast.total.toLocaleString('id-ID')}</span>
-                              <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% dari total</span>
+                              <span className="text-[9px] text-gray-500 mt-0.5">{persenTotal.toFixed(1)}% {t("dari_total")}</span>
                            </div>
                         </div>
                         

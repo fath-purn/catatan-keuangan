@@ -5,6 +5,7 @@ import { FiArrowLeft, FiTarget, FiCalendar, FiMessageCircle, FiDroplet, FiSmile 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createGoalAction } from "@/lib/goals-action";
+import { useLanguage } from "@/components/language-provider";
 
 
 const COLORS = ["#DBCBFF", "#E4F087", "#60D689", "#FF7676", "#FFB443", "#87CEFA"];
@@ -12,6 +13,7 @@ const EMOJIS = ["📱", "💻", "🏠", "✈️", "🚗", "🎓", "💍", "💰"
 
 export default function TambahGoals() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [nominal, setNominal] = useState("");
   const [nama, setNama] = useState("");
@@ -55,7 +57,7 @@ export default function TambahGoals() {
       }
     } catch (err) {
       console.error(err);
-      setError("Terjadi kesalahan koneksi saat menyimpan.");
+      setError(t("koneksi_error_simpan"));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function TambahGoals() {
         <Link href="/goals" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black uppercase">Tambah Goals</h1>
+        <h1 className="text-xl font-black text-black uppercase">{t("buat_goals_baru")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -78,7 +80,7 @@ export default function TambahGoals() {
         {/* Area Input Nominal (Besar) */}
         <div className="px-5 mb-2 flex flex-col items-center mt-6">
           <p className="text-[10px] font-bold mb-2 uppercase tracking-wider text-black">
-            Target Nominal Tabungan
+            {t("target_nominal_tabungan")}
           </p>
           <div className="flex items-center justify-center w-full bg-white border-4 border-black rounded-[32px] py-6 px-4 shadow-[8px_8px_0_0_#000]">
             <span className="text-3xl font-black mr-2">Rp</span>
@@ -102,7 +104,7 @@ export default function TambahGoals() {
             {/* Pemilih Icon Emoji */}
             <div className="flex flex-col gap-1.5 relative shrink-0">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-                <FiSmile className="w-3 h-3" /> Ikon
+                <FiSmile className="w-3 h-3" /> {t("ikon")}
               </label>
               <button
                 type="button"
@@ -135,11 +137,11 @@ export default function TambahGoals() {
             {/* Nama Goal */}
             <div className="flex flex-col gap-1.5 flex-1">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-                <FiTarget className="w-3 h-3" /> Nama Goal
+                <FiTarget className="w-3 h-3" /> {t("nama_goal")}
               </label>
               <input
                 type="text"
-                placeholder="Cth: Liburan ke Jepang"
+                placeholder={t("placeholder_nama_goal")}
                 value={nama}
                 onChange={e => setNama(e.target.value)}
                 className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none placeholder-gray-400"
@@ -151,7 +153,7 @@ export default function TambahGoals() {
           {/* Input Tenggat Waktu */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-              <FiCalendar className="w-3 h-3" /> Tenggat Waktu
+              <FiCalendar className="w-3 h-3" /> {t("tenggat_waktu")}
             </label>
             <input
               type="date"
@@ -165,10 +167,10 @@ export default function TambahGoals() {
           {/* Input Motivasi */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-              <FiMessageCircle className="w-3 h-3" /> Kalimat Motivasi
+              <FiMessageCircle className="w-3 h-3" /> {t("kalimat_motivasi")}
             </label>
             <textarea
-              placeholder="Biar semangat nabungnya! (Misal: Ayo nabung, bentar lagi kebeli!)"
+              placeholder={t("placeholder_motivasi")}
               value={motivasi}
               onChange={e => setMotivasi(e.target.value)}
               className="w-full bg-white border-2 border-black rounded-xl px-4 py-3.5 text-sm font-bold text-black shadow-[2px_2px_0_0_#000] outline-none placeholder-gray-400 min-h-[80px] resize-none"
@@ -179,7 +181,7 @@ export default function TambahGoals() {
           {/* Pilihan Warna */}
           <div className="flex flex-col gap-1.5 mt-2">
             <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
-              <FiDroplet className="w-3 h-3" /> Warna Tema
+              <FiDroplet className="w-3 h-3" /> {t("warna_tema")}
             </label>
             <div className="flex flex-wrap gap-4 mt-1 pl-1">
               {COLORS.map(c => (
@@ -212,7 +214,7 @@ export default function TambahGoals() {
             disabled={loading}
             className="w-full bg-black text-[#E4F087] border-4 border-black rounded-2xl py-4 text-sm font-black uppercase shadow-[4px_4px_0_0_#000] hover:bg-gray-800 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
           >
-            <FiTarget className="w-5 h-5" /> {loading ? "Menyimpan..." : "Simpan Goal Baru"}
+            <FiTarget className="w-5 h-5" /> {loading ? t("menyimpan") : t("simpan_goal")}
           </button>
         </div>
 

@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { startOfMonth, endOfMonth, addMonths, startOfWeek, endOfWeek, addWeeks } from "date-fns";
 import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
+import { Locale } from "@/lib/translations";
 
 const getCachedMonthlyReport = unstable_cache(
-  async (userId: string, offset: number) => {
+  async (userId: string, offset: number, locale: Locale) => {
     const targetDate = addMonths(new Date(), offset);
     const start = startOfMonth(targetDate);
     const end = endOfMonth(targetDate);
@@ -27,18 +29,23 @@ const getCachedMonthlyReport = unstable_cache(
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
       ];
+      const englishMonths = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const months = locale === "en" ? englishMonths : indonesianMonths;
       
-      const periode = `${indonesianMonths[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+      const periode = `${months[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
       // Initialize weekly metrics
       let totalPemasukan = 0;
       let totalPengeluaran = 0;
 
       const weeklyData = [
-        { minggu: "Mg 1", pengeluaran: 0, pemasukan: 0 },
-        { minggu: "Mg 2", pengeluaran: 0, pemasukan: 0 },
-        { minggu: "Mg 3", pengeluaran: 0, pemasukan: 0 },
-        { minggu: "Mg 4", pengeluaran: 0, pemasukan: 0 },
+        { minggu: locale === "en" ? "Wk 1" : "Mg 1", pengeluaran: 0, pemasukan: 0 },
+        { minggu: locale === "en" ? "Wk 2" : "Mg 2", pengeluaran: 0, pemasukan: 0 },
+        { minggu: locale === "en" ? "Wk 3" : "Mg 3", pengeluaran: 0, pemasukan: 0 },
+        { minggu: locale === "en" ? "Wk 4" : "Mg 4", pengeluaran: 0, pemasukan: 0 },
       ];
 
       // Initialize category totals
@@ -103,11 +110,13 @@ export async function getMonthlyReport(offset: number) {
   if (!session || !session.user || !session.user.id) {
     return null;
   }
-  return getCachedMonthlyReport(session.user.id, offset);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedMonthlyReport(session.user.id, offset, locale);
 }
 
 const getCachedWeeklyReport = unstable_cache(
-  async (userId: string, offset: number) => {
+  async (userId: string, offset: number, locale: Locale) => {
     const targetDate = addWeeks(new Date(), offset);
     const start = startOfWeek(targetDate, { weekStartsOn: 1 });
     const end = endOfWeek(targetDate, { weekStartsOn: 1 });
@@ -128,22 +137,27 @@ const getCachedWeeklyReport = unstable_cache(
         "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
         "Jul", "Agt", "Sep", "Okt", "Nov", "Des"
       ];
+      const englishMonthsShort = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+      const monthsShort = locale === "en" ? englishMonthsShort : indonesianMonthsShort;
 
-      const startStr = `${start.getDate()} ${indonesianMonthsShort[start.getMonth()]}`;
-      const endStr = `${end.getDate()} ${indonesianMonthsShort[end.getMonth()]} ${end.getFullYear()}`;
+      const startStr = `${start.getDate()} ${monthsShort[start.getMonth()]}`;
+      const endStr = `${end.getDate()} ${monthsShort[end.getMonth()]} ${end.getFullYear()}`;
       const periode = `${startStr} - ${endStr}`;
 
       let totalPemasukan = 0;
       let totalPengeluaran = 0;
 
       const dailyData = [
-        { hari: "Sen", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Sel", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Rab", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Kam", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Jum", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Sab", pengeluaran: 0, pemasukan: 0 },
-        { hari: "Min", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Mon" : "Sen", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Tue" : "Sel", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Wed" : "Rab", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Thu" : "Kam", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Fri" : "Jum", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Sat" : "Sab", pengeluaran: 0, pemasukan: 0 },
+        { hari: locale === "en" ? "Sun" : "Min", pengeluaran: 0, pemasukan: 0 },
       ];
 
       const categoryTotals: { [key: string]: number } = {};
@@ -199,11 +213,13 @@ export async function getWeeklyReport(offset: number) {
   if (!session || !session.user || !session.user.id) {
     return null;
   }
-  return getCachedWeeklyReport(session.user.id, offset);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedWeeklyReport(session.user.id, offset, locale);
 }
 
 const getCachedIncomeReport = unstable_cache(
-  async (userId: string, offset: number) => {
+  async (userId: string, offset: number, locale: Locale) => {
     const targetDate = addMonths(new Date(), offset);
     const start = startOfMonth(targetDate);
     const end = endOfMonth(targetDate);
@@ -225,8 +241,13 @@ const getCachedIncomeReport = unstable_cache(
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
       ];
+      const englishMonths = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const months = locale === "en" ? englishMonths : indonesianMonths;
       
-      const periode = `${indonesianMonths[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+      const periode = `${months[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
       let totalPemasukan = 0;
       const assetTotals: { [key: string]: number } = {};
@@ -275,11 +296,13 @@ export async function getIncomeReport(offset: number) {
   if (!session || !session.user || !session.user.id) {
     return null;
   }
-  return getCachedIncomeReport(session.user.id, offset);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedIncomeReport(session.user.id, offset, locale);
 }
 
 const getCachedExpenseReport = unstable_cache(
-  async (userId: string, offset: number) => {
+  async (userId: string, offset: number, locale: Locale) => {
     const targetDate = addMonths(new Date(), offset);
     const start = startOfMonth(targetDate);
     const end = endOfMonth(targetDate);
@@ -301,8 +324,13 @@ const getCachedExpenseReport = unstable_cache(
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
       ];
+      const englishMonths = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const months = locale === "en" ? englishMonths : indonesianMonths;
       
-      const periode = `${indonesianMonths[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+      const periode = `${months[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
       let totalPengeluaran = 0;
       const categoryTotals: { [key: string]: number } = {};
@@ -351,7 +379,9 @@ export async function getExpenseReport(offset: number) {
   if (!session || !session.user || !session.user.id) {
     return null;
   }
-  return getCachedExpenseReport(session.user.id, offset);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedExpenseReport(session.user.id, offset, locale);
 }
 
 const getCachedMonthlyTransactionsForExport = unstable_cache(

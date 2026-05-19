@@ -3,15 +3,17 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { Locale } from "@/lib/translations";
 
 // Helper to format number to "1.250.000" style
 const formatNumber = (num: number) => {
   return num.toLocaleString("id-ID").replace(/,/g, ".");
 };
 
-// Helper to format date into "DD MMM YYYY" e.g., "12 Des 2026"
-const formatIndonesianDateShort = (date: Date) => {
-  const months = [
+// Helper to format date into "DD MMM YYYY" e.g., "12 Des 2026" or "12 Dec 2026"
+const formatGoalDateShort = (date: Date, locale: Locale) => {
+  const indonesianMonths = [
     "Jan",
     "Feb",
     "Mar",
@@ -25,11 +27,26 @@ const formatIndonesianDateShort = (date: Date) => {
     "Nov",
     "Des",
   ];
+  const englishMonths = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const months = locale === "en" ? englishMonths : indonesianMonths;
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
 
 const getCachedGoalsData = unstable_cache(
-  async (userId: string) => {
+  async (userId: string, locale: Locale) => {
     try {
       const goals = await prisma.goal.findMany({
         where: { userId },
@@ -57,10 +74,13 @@ const getCachedGoalsData = unstable_cache(
           target: `Rp ${formatNumber(goal.target)}`,
           terkumpul: `Rp ${formatNumber(goal.terkumpul)}`,
           persen,
-          tenggatWaktu: formatIndonesianDateShort(goal.tenggatWaktu),
+          tenggatWaktu: formatGoalDateShort(goal.tenggatWaktu, locale),
           warnaBackground,
           motivasi:
-            goal.motivasi || "Ayo menabung pelan-pelan untuk impianmu! ✨",
+            goal.motivasi ||
+            (locale === "en"
+              ? "Let's save slowly for your dream! ✨"
+              : "Ayo menabung pelan-pelan untuk impianmu! ✨"),
         };
       });
 
@@ -99,7 +119,9 @@ export async function getGoalsData() {
       goals: [],
     };
   }
-  return getCachedGoalsData(session.user.id);
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("app_locale")?.value as Locale) || "id";
+  return getCachedGoalsData(session.user.id, locale);
 }
 
 const getCachedGoalById = unstable_cache(

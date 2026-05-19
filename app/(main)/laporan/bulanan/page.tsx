@@ -4,6 +4,7 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getMonthlyReport, getMonthlyTransactionsForExport } from "@/lib/laporan-data";
+import { useLanguage } from "@/components/language-provider";
 
 const KATEGORI_LIST = [
   { id: "Makanan", icon: "🍔", label: "Makanan" },
@@ -18,6 +19,7 @@ export default function LaporanBulanan() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
     totalPengeluaran: number;
@@ -26,6 +28,19 @@ export default function LaporanBulanan() {
     kategori: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
+
+  const translateKategori = (val: string) => {
+    if (val === "Makanan") return t("opt_makanan");
+    if (val === "Transportasi") return t("opt_transportasi");
+    if (val === "Belanja") return t("opt_belanja");
+    if (val === "Tagihan") return t("opt_tagihan");
+    if (val === "Pemasukan") return t("opt_pemasukan");
+    return t("opt_lainnya");
+  };
+
+  const translateMingguAbbr = (minggu: string) => {
+    return minggu.replace("Mg", t("abbr_minggu"));
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -48,24 +63,37 @@ export default function LaporanBulanan() {
     try {
       const data = await getMonthlyTransactionsForExport(monthOffset);
       if (!data || data.length === 0) {
-        alert("Tidak ada transaksi untuk diekspor pada bulan ini.");
+        alert(t("tidak_ada_transaksi_export"));
         return;
       }
 
-      // Construct CSV string with UTF-8 BOM to support Indonesian Excel compatibility
-      const headers = ["Tanggal", "Judul", "Jenis", "Kategori", "Aset", "Nominal", "Keperluan", "Mood"];
+      // Construct CSV string with UTF-8 BOM to support Indonesian/English Excel compatibility
+      const headers = [
+        t("tanggal"), 
+        t("keterangan"), 
+        t("opt_semua") === "All" ? "Type" : "Jenis", 
+        t("kategori"), 
+        t("aset"), 
+        t("opt_semua") === "All" ? "Amount" : "Nominal", 
+        t("keperluan"), 
+        t("mood")
+      ];
       const csvRows = [headers.join(",")];
 
       for (const row of data) {
         const values = [
           row.tanggal,
           `"${row.judul.replace(/"/g, '""')}"`,
-          row.jenis,
-          row.kategori,
-          row.aset,
+          row.jenis === "Pemasukan" ? t("opt_pemasukan") : t("opt_pengeluaran"),
+          translateKategori(row.kategori),
+          row.aset === "Cash" && t("opt_semua") === "All" ? "Cash" : (row.aset === "Cash" ? "Tunai" : row.aset),
           row.nominal,
-          row.keperluan,
-          row.mood
+          row.keperluan === "Kebutuhan" ? t("opt_kebutuhan") : 
+          row.keperluan === "Impulsif" ? t("opt_impulsif") : 
+          row.keperluan === "Emergency" ? t("opt_emergency") : t("opt_goals"),
+          row.mood === "Senang" ? t("opt_senang") :
+          row.mood === "Marah" ? t("opt_marah") :
+          row.mood === "Sedih" ? t("opt_sedih") : t("opt_biasa")
         ];
         csvRows.push(values.join(","));
       }
@@ -82,7 +110,7 @@ export default function LaporanBulanan() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Gagal mengekspor CSV:", err);
-      alert("Terjadi kesalahan saat mengekspor laporan.");
+      alert(t("error_export"));
     } finally {
       setExporting(false);
     }
@@ -92,13 +120,13 @@ export default function LaporanBulanan() {
     return (
       <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
         <div className="w-16 h-16 border-8 border-black border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 font-black uppercase text-xs">Memuat Data Laporan...</p>
+        <p className="mt-4 font-black uppercase text-xs">{t("memuat_laporan")}</p>
       </div>
     );
   }
 
   const currentMonthData = reportData || {
-    periode: "Memuat...",
+    periode: t("menyimpan") === "Saving..." ? "Loading..." : "Memuat...",
     totalPengeluaran: 0,
     totalPemasukan: 0,
     grafik: [
@@ -123,7 +151,7 @@ export default function LaporanBulanan() {
         <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
           <FiArrowLeft className="w-5 h-5 font-black text-black" />
         </Link>
-        <h1 className="text-xl font-black text-black uppercase">Bulanan</h1>
+        <h1 className="text-xl font-black text-black uppercase">{t("bulanan")}</h1>
         <div className="w-10"></div>
       </div>
 
@@ -142,9 +170,9 @@ export default function LaporanBulanan() {
           <div className="flex flex-col items-center">
             <span className="font-black text-sm uppercase">{currentMonthData.periode}</span>
             {monthOffset === 0 ? (
-              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">Bulan Ini</span>
+              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">{t("bulan_ini")}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} bulan lalu</span>
+              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} {t("bulan_lalu")}</span>
             )}
           </div>
 
@@ -166,11 +194,11 @@ export default function LaporanBulanan() {
           {exporting ? (
             <>
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-              Mengekspor Laporan...
+              {t("mengekspor_laporan")}
             </>
           ) : (
             <>
-              📥 Export Laporan Lengkap (.CSV)
+              📥 {t("export_laporan_csv")}
             </>
           )}
         </button>
@@ -178,11 +206,11 @@ export default function LaporanBulanan() {
         {/* Ringkasan */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#FF7676] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">Pengeluaran</span>
+            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
           </div>
           <div className="bg-[#60D689] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">Pemasukan</span>
+            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
           </div>
         </div>
@@ -190,7 +218,7 @@ export default function LaporanBulanan() {
         {/* Bar Chart CSS */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
-            Grafik Pengeluaran
+            {t("grafik_pengeluaran")}
             <span className="text-xl">📉</span>
           </h2>
 
@@ -210,29 +238,29 @@ export default function LaporanBulanan() {
                   </div>
                 </div>
                 <span className="text-[10px] font-black uppercase text-black">
-                  {d.minggu}
+                  {translateMingguAbbr(d.minggu)}
                 </span>
               </div>
             ))}
           </div>
 
           <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
-            <span>Rata-rata Pengeluaran</span>
-            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 4).toLocaleString('id-ID')} / minggu</span>
+            <span>{t("rata_rata_pengeluaran")}</span>
+            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 4).toLocaleString('id-ID')} / {t("minggu")}</span>
           </div>
         </div>
 
         {/* Rincian Kategori */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
-            Rincian Kategori
+            {t("rincian_kategori")}
             <span className="text-xl">🍔</span>
           </h2>
 
           <div className="flex flex-col gap-4">
             {currentMonthData.kategori.length === 0 ? (
               <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                Belum ada pengeluaran di bulan ini
+                {t("belum_ada_pengeluaran_bulan_ini")}
               </div>
             ) : (
               currentMonthData.kategori.map((kat) => {
@@ -247,7 +275,7 @@ export default function LaporanBulanan() {
                         <span className="bg-[#FDF8EE] border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]">
                           {info.icon}
                         </span>
-                        <span className="uppercase">{info.label}</span>
+                        <span className="uppercase">{translateKategori(info.id)}</span>
                       </div>
                       <span>Rp {kat.total.toLocaleString('id-ID')}</span>
                     </div>

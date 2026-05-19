@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FiHome, FiList, FiPlus, FiFlag, FiUser } from "react-icons/fi";
 import clsx from "clsx";
+import { useLanguage } from "@/components/language-provider";
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const navItems = [
-    { name: "Beranda", href: "/", icon: FiHome },
-    { name: "Transaksi", href: "/transaksi", icon: FiList },
-    { name: "Tambah", href: "/transaksi/tambah", icon: FiPlus, isMain: true },
-    { name: "Goals", href: "/goals", icon: FiFlag },
-    { name: "Profile", href: "/profile", icon: FiUser },
+    { name: t("nav_beranda"), href: "/", icon: FiHome },
+    { name: t("nav_transaksi"), href: "/transaksi", icon: FiList },
+    { name: t("nav_tambah"), href: "/transaksi/tambah", icon: FiPlus, isMain: true },
+    { name: t("nav_goals"), href: "/goals", icon: FiFlag },
+    { name: t("nav_profile"), href: "/profile", icon: FiUser },
   ];
 
   return (
