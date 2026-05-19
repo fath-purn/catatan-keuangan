@@ -89,7 +89,7 @@ export default function TambahTransaksi() {
   const [state, formAction, isPending] = useActionState(createTransactionAction, null);
   const [availableGoals, setAvailableGoals] = useState<GoalTransaction[]>([]);
   const [formErrors, setFormErrors] = useState<FormStateTransaction | null>(null);
-  
+
   // State untuk form fields
   const [jenisTransaksi, setJenisTransaksi] = useState<boolean>(false); // false = pengeluaran, true = pemasukan
   const [nominal, setNominal] = useState("");
@@ -141,10 +141,13 @@ export default function TambahTransaksi() {
 
   useEffect(() => {
     if (state?.message && state.success !== false) {
-      // Pendaftaran berhasil
+      // Putar suara koin
+      const audio = new Audio("/suara-koin.mp3");
+      audio.play().catch((err) => console.error("Error playing sound:", err));
+
       setTimeout(() => {
         router.push("/transaksi");
-      }, 1500);
+      }, 500);
     }
     if (state?.error) {
       setFormErrors(state);
@@ -257,7 +260,7 @@ export default function TambahTransaksi() {
                 required
               />
             </div>
-            
+
             {/* Input Waktu */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1 flex items-center gap-1">
@@ -384,9 +387,8 @@ export default function TambahTransaksi() {
 
           {/* Toast / Status Message */}
           {state?.message && (
-            <div className={`p-4 border-2 border-black rounded-xl text-xs font-black shadow-[2px_2px_0_0_#000] text-center ${
-              state.success !== false ? "bg-[#60D689] text-black" : "bg-[#FF7676] text-black"
-            }`}>
+            <div className={`p-4 border-2 border-black rounded-xl text-xs font-black shadow-[2px_2px_0_0_#000] text-center ${state.success !== false ? "bg-[#60D689] text-black" : "bg-[#FF7676] text-black"
+              }`}>
               {state.message}
             </div>
           )}
