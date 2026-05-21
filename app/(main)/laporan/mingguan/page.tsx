@@ -3,7 +3,7 @@
 import { FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { getWeeklyReport } from "@/lib/laporan-data";
+import { getWeeklyReport, getWeeklyTransactionsForExport } from "@/lib/laporan-data";
 import { useLanguage } from "@/components/language-provider";
 
 const KATEGORI_LIST = [
@@ -18,6 +18,8 @@ const KATEGORI_LIST = [
 export default function LaporanMingguan() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pengeluaran" | "pemasukan">("pengeluaran");
   const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
@@ -25,6 +27,7 @@ export default function LaporanMingguan() {
     totalPemasukan: number;
     grafik: { hari: string; pengeluaran: number; pemasukan: number }[];
     kategori: { id: string; total: number }[];
+    kategoriPemasukan?: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
 
@@ -64,6 +67,64 @@ export default function LaporanMingguan() {
       });
   }, [weekOffset]);
 
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const data = await getWeeklyTransactionsForExport(weekOffset);
+      if (!data || data.length === 0) {
+        alert(t("tidak_ada_transaksi_export"));
+        return;
+      }
+
+      // Construct CSV string with UTF-8 BOM to support Indonesian/English Excel compatibility
+      const headers = [
+        t("tanggal"), 
+        t("keterangan"), 
+        t("opt_semua") === "All" ? "Type" : "Jenis", 
+        t("kategori"), 
+        t("aset"), 
+        t("opt_semua") === "All" ? "Amount" : "Nominal", 
+        t("keperluan"), 
+        t("mood")
+      ];
+      const csvRows = [headers.join(",")];
+
+      for (const row of data) {
+        const values = [
+          row.tanggal,
+          `"${row.judul.replace(/"/g, '""')}"`,
+          row.jenis === "Pemasukan" ? t("opt_pemasukan") : t("opt_pengeluaran"),
+          translateKategori(row.kategori),
+          row.aset === "Cash" && t("opt_semua") === "All" ? "Cash" : (row.aset === "Cash" ? "Tunai" : row.aset),
+          row.nominal,
+          row.keperluan === "Kebutuhan" ? t("opt_kebutuhan") : 
+          row.keperluan === "Impulsif" ? t("opt_impulsif") : 
+          row.keperluan === "Emergency" ? t("opt_emergency") : t("opt_goals"),
+          row.mood === "Senang" ? t("opt_senang") :
+          row.mood === "Marah" ? t("opt_marah") :
+          row.mood === "Sedih" ? t("opt_sedih") : t("opt_biasa")
+        ];
+        csvRows.push(values.join(","));
+      }
+
+      const csvContent = "\uFEFF" + csvRows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Laporan_Keuangan_Mingguan_${currentWeekData.periode.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Gagal mengekspor CSV:", err);
+      alert(t("error_export"));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading && !reportData) {
     return (
       <div className="min-h-screen bg-[#FDF8EE] flex flex-col justify-center items-center font-sans text-black">
@@ -87,12 +148,34 @@ export default function LaporanMingguan() {
       { hari: "Min", pengeluaran: 0, pemasukan: 0 },
     ],
     kategori: [],
+    kategoriPemasukan: [],
     hasOlderData: false,
   };
 
   const totalPengeluaran = currentWeekData.totalPengeluaran;
   const totalPemasukan = currentWeekData.totalPemasukan;
-  const maxPengeluaran = Math.max(...currentWeekData.grafik.map(d => d.pengeluaran)) || 1;
+  
+  const isPengeluaran = activeTab === "pengeluaran";
+  const activeTotal = isPengeluaran ? totalPengeluaran : totalPemasukan;
+  
+  const maxVal = Math.max(...currentWeekData.grafik.map(d => isPengeluaran ? d.pengeluaran : d.pemasukan)) || 1;
+  const isEn = t("opt_semua") === "All";
+  
+  const chartTitle = isPengeluaran
+    ? t("grafik_pengeluaran")
+    : (isEn ? "Income Chart" : "Grafik Pemasukan");
+
+  const averageTitle = isPengeluaran
+    ? t("rata_rata_pengeluaran")
+    : (isEn ? "Average Income" : "Rata-rata Pemasukan");
+
+  const activeKategori = isPengeluaran 
+    ? currentWeekData.kategori 
+    : (currentWeekData.kategoriPemasukan || []);
+
+  const noCategoryMsg = isPengeluaran 
+    ? t("belum_ada_pengeluaran_minggu_ini") 
+    : (isEn ? "No income recorded this week" : "Belum ada pemasukan di minggu ini");
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
@@ -136,70 +219,110 @@ export default function LaporanMingguan() {
           </button>
         </div>
 
+        {/* Tombol Export Laporan Mingguan */}
+        <button
+          onClick={handleExportCSV}
+          disabled={exporting || loading}
+          className="w-full bg-[#87CEFA] border-4 border-black rounded-2xl p-4 font-black uppercase text-xs shadow-[4px_4px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0_0_#000] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {exporting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+              {t("mengekspor_laporan")}
+            </>
+          ) : (
+            <>
+              📥 {t("export_laporan_csv")}
+            </>
+          )}
+        </button>
+
         {/* Ringkasan */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#FF7676] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
+          <button
+            onClick={() => setActiveTab("pengeluaran")}
+            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
+              isPengeluaran
+                ? "bg-[#FF7676] shadow-[4px_4px_0_0_#000]"
+                : "bg-[#FF7676]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+            }`}
+          >
             <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
-          </div>
-          <div className="bg-[#60D689] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("pemasukan")}
+            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
+              !isPengeluaran
+                ? "bg-[#60D689] shadow-[4px_4px_0_0_#000]"
+                : "bg-[#60D689]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+            }`}
+          >
             <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
-          </div>
+          </button>
         </div>
 
         {/* Bar Chart CSS */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
-            {t("grafik_pengeluaran")}
-            <span className="text-xl">📉</span>
+            {chartTitle}
+            <span className="text-xl">{isPengeluaran ? "📉" : "📈"}</span>
           </h2>
 
           <div className="flex justify-between items-end h-56 border-b-4 border-black pb-2 gap-2 relative">
             <div className="absolute top-0 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
             <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
 
-            {currentWeekData.grafik.map(d => (
-              <div key={d.hari} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
-                <div
-                  className="w-full bg-[#FF7676] border-2 border-black rounded-t-lg relative transition-all group-hover:bg-[#FF5555] group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000]"
-                  style={{ height: `${(d.pengeluaran / maxPengeluaran) * 100}%`, minHeight: '15%' }}
-                >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
-                    {d.pengeluaran.toLocaleString('id-ID')}
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
+            {currentWeekData.grafik.map(d => {
+              const val = isPengeluaran ? d.pengeluaran : d.pemasukan;
+              return (
+                <div key={d.hari} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
+                  <div
+                    className={`w-full border-2 border-black rounded-t-lg relative transition-all group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000] ${
+                      isPengeluaran 
+                        ? 'bg-[#FF7676] hover:bg-[#FF5555]' 
+                        : 'bg-[#60D689] hover:bg-[#4ECA79]'
+                    }`}
+                    style={{ height: `${(val / maxVal) * 100}%`, minHeight: '15%' }}
+                  >
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
+                      {val.toLocaleString('id-ID')}
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
+                    </div>
                   </div>
+                  <span className={`text-[10px] font-black uppercase ${d.hari === "Min" || d.hari === "Sab" ? (isPengeluaran ? "text-[#FF7676]" : "text-[#60D689]") : "text-black"}`}>
+                    {translateDay(d.hari)}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-black uppercase ${d.hari === "Min" || d.hari === "Sab" ? "text-[#FF7676]" : "text-black"}`}>
-                  {translateDay(d.hari)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
-            <span>{t("rata_rata_pengeluaran")}</span>
-            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 7).toLocaleString('id-ID')} / {t("hari")}</span>
+            <span>{averageTitle}</span>
+            <span className="text-black text-xs">Rp {Math.round(activeTotal / 7).toLocaleString('id-ID')} / {t("hari")}</span>
           </div>
         </div>
 
         {/* Rincian Kategori */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
-            {t("rincian_kategori")}
-            <span className="text-xl">🍔</span>
+            {isPengeluaran ? t("rincian_kategori") : (isEn ? "Income Breakdown" : "Rincian Pemasukan")}
+            <span className="text-xl">{isPengeluaran ? "🍔" : "💰"}</span>
           </h2>
 
           <div className="flex flex-col gap-4">
-            {currentWeekData.kategori.length === 0 ? (
+            {activeKategori.length === 0 ? (
               <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                {t("belum_ada_pengeluaran_minggu_ini")}
+                {noCategoryMsg}
               </div>
             ) : (
-              currentWeekData.kategori.map((kat) => {
+              activeKategori.map((kat) => {
                 const info = KATEGORI_LIST.find(k => k.id === kat.id);
                 if (!info) return null;
-                const persen = totalPengeluaran > 0 ? (kat.total / totalPengeluaran) * 100 : 0;
+                const persen = activeTotal > 0 ? (kat.total / activeTotal) * 100 : 0;
 
                 return (
                   <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">

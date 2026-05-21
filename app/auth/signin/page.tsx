@@ -2,7 +2,7 @@ import LoginForm from "@/components/auth/login-form";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign In | Catatan Keuangan",
+  title: "Sign In | Finfeel",
 };
 
 export default async function SignInPage({
@@ -25,7 +25,7 @@ export default async function SignInPage({
           <div className="inline-block px-3 py-1 bg-[#DBCBFF] text-black border-2 border-black shadow-[2px_2px_0_0_#000] text-xs font-black uppercase rounded-lg mb-2">
             Masuk Akun
           </div>
-          <h1 className="text-4xl font-black text-black tracking-tight leading-none uppercase">Catatan<br/>Keuangan</h1>
+          <h1 className="text-4xl font-black text-black tracking-tight leading-none uppercase">Finfeel</h1>
         </div>
 
         <LoginForm />

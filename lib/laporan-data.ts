@@ -50,6 +50,7 @@ const getCachedMonthlyReport = unstable_cache(
 
       // Initialize category totals
       const categoryTotals: { [key: string]: number } = {};
+      const incomeCategoryTotals: { [key: string]: number } = {};
 
       transactions.forEach((tx) => {
         const day = new Date(tx.tanggal).getDate();
@@ -65,6 +66,9 @@ const getCachedMonthlyReport = unstable_cache(
         if (tx.jenis_transaksi) {
           totalPemasukan += amount;
           weeklyData[weekIdx].pemasukan += amount;
+
+          const category = tx.kategori || "Lainnya";
+          incomeCategoryTotals[category] = (incomeCategoryTotals[category] || 0) + amount;
         } else {
           totalPengeluaran += amount;
           weeklyData[weekIdx].pengeluaran += amount;
@@ -77,6 +81,10 @@ const getCachedMonthlyReport = unstable_cache(
 
       // Format categories into an array of { id, total } sorted descending
       const kategori = Object.entries(categoryTotals)
+        .map(([id, total]) => ({ id, total }))
+        .sort((a, b) => b.total - a.total);
+
+      const kategoriPemasukan = Object.entries(incomeCategoryTotals)
         .map(([id, total]) => ({ id, total }))
         .sort((a, b) => b.total - a.total);
 
@@ -94,6 +102,7 @@ const getCachedMonthlyReport = unstable_cache(
         totalPemasukan,
         grafik: weeklyData,
         kategori,
+        kategoriPemasukan,
         hasOlderData,
       };
     } catch (error) {
@@ -161,6 +170,7 @@ const getCachedWeeklyReport = unstable_cache(
       ];
 
       const categoryTotals: { [key: string]: number } = {};
+      const incomeCategoryTotals: { [key: string]: number } = {};
 
       transactions.forEach((tx) => {
         const amount = tx.nominal;
@@ -170,6 +180,9 @@ const getCachedWeeklyReport = unstable_cache(
         if (tx.jenis_transaksi) {
           totalPemasukan += amount;
           dailyData[dayIdx].pemasukan += amount;
+
+          const category = tx.kategori || "Lainnya";
+          incomeCategoryTotals[category] = (incomeCategoryTotals[category] || 0) + amount;
         } else {
           totalPengeluaran += amount;
           dailyData[dayIdx].pengeluaran += amount;
@@ -180,6 +193,10 @@ const getCachedWeeklyReport = unstable_cache(
       });
 
       const kategori = Object.entries(categoryTotals)
+        .map(([id, total]) => ({ id, total }))
+        .sort((a, b) => b.total - a.total);
+
+      const kategoriPemasukan = Object.entries(incomeCategoryTotals)
         .map(([id, total]) => ({ id, total }))
         .sort((a, b) => b.total - a.total);
 
@@ -197,6 +214,7 @@ const getCachedWeeklyReport = unstable_cache(
         totalPemasukan,
         grafik: dailyData,
         kategori,
+        kategoriPemasukan,
         hasOlderData,
       };
     } catch (error) {
@@ -427,6 +445,51 @@ export async function getMonthlyTransactionsForExport(offset: number) {
     return null;
   }
   return getCachedMonthlyTransactionsForExport(session.user.id, offset);
+}
+
+const getCachedWeeklyTransactionsForExport = unstable_cache(
+  async (userId: string, offset: number) => {
+    const targetDate = addWeeks(new Date(), offset);
+    const start = startOfWeek(targetDate, { weekStartsOn: 1 });
+    const end = endOfWeek(targetDate, { weekStartsOn: 1 });
+
+    try {
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          userId,
+          tanggal: {
+            gte: start,
+            lte: end,
+          },
+        },
+        orderBy: { tanggal: "asc" },
+      });
+
+      return transactions.map(tx => ({
+        tanggal: tx.tanggal.toISOString().split('T')[0],
+        judul: tx.judul,
+        jenis: tx.jenis_transaksi ? "Pemasukan" : "Pengeluaran",
+        kategori: tx.kategori,
+        aset: tx.aset,
+        nominal: tx.nominal,
+        keperluan: tx.keperluan,
+        mood: tx.mood,
+      }));
+    } catch (error) {
+      console.error("Error fetching weekly transactions for export:", error);
+      return null;
+    }
+  },
+  ["export-weekly-transactions"],
+  { tags: ["reports"] }
+);
+
+export async function getWeeklyTransactionsForExport(offset: number) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return null;
+  }
+  return getCachedWeeklyTransactionsForExport(session.user.id, offset);
 }
 
 

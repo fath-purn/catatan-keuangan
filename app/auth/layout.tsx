@@ -9,8 +9,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Catatan Keuangan",
-  description: "Aplikasi Catatan Keuangan Pribadi",
+  title: "Finfeel",
+  description: "Aplikasi Finfeel Pribadi",
 };
 
 

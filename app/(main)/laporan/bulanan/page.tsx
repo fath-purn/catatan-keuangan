@@ -19,6 +19,7 @@ export default function LaporanBulanan() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pengeluaran" | "pemasukan">("pengeluaran");
   const { t } = useLanguage();
   const [reportData, setReportData] = useState<{
     periode: string;
@@ -26,6 +27,7 @@ export default function LaporanBulanan() {
     totalPemasukan: number;
     grafik: { minggu: string; pengeluaran: number; pemasukan: number }[];
     kategori: { id: string; total: number }[];
+    kategoriPemasukan?: { id: string; total: number }[];
     hasOlderData: boolean;
   } | null>(null);
 
@@ -136,12 +138,34 @@ export default function LaporanBulanan() {
       { minggu: "Mg 4", pengeluaran: 0, pemasukan: 0 },
     ],
     kategori: [],
+    kategoriPemasukan: [],
     hasOlderData: false,
   };
 
   const totalPengeluaran = currentMonthData.totalPengeluaran;
   const totalPemasukan = currentMonthData.totalPemasukan;
-  const maxPengeluaran = Math.max(...currentMonthData.grafik.map(d => d.pengeluaran)) || 1;
+  
+  const isPengeluaran = activeTab === "pengeluaran";
+  const activeTotal = isPengeluaran ? totalPengeluaran : totalPemasukan;
+  
+  const maxVal = Math.max(...currentMonthData.grafik.map(d => isPengeluaran ? d.pengeluaran : d.pemasukan)) || 1;
+  const isEn = t("opt_semua") === "All";
+  
+  const chartTitle = isPengeluaran
+    ? t("grafik_pengeluaran")
+    : (isEn ? "Income Chart" : "Grafik Pemasukan");
+
+  const averageTitle = isPengeluaran
+    ? t("rata_rata_pengeluaran")
+    : (isEn ? "Average Income" : "Rata-rata Pemasukan");
+
+  const activeKategori = isPengeluaran 
+    ? currentMonthData.kategori 
+    : (currentMonthData.kategoriPemasukan || []);
+
+  const noCategoryMsg = isPengeluaran 
+    ? t("belum_ada_pengeluaran_bulan_ini") 
+    : (isEn ? "No income recorded this month" : "Belum ada pemasukan di bulan ini");
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
@@ -205,68 +229,90 @@ export default function LaporanBulanan() {
 
         {/* Ringkasan */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#FF7676] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
+          <button
+            onClick={() => setActiveTab("pengeluaran")}
+            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
+              isPengeluaran
+                ? "bg-[#FF7676] shadow-[4px_4px_0_0_#000]"
+                : "bg-[#FF7676]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+            }`}
+          >
             <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
-          </div>
-          <div className="bg-[#60D689] border-4 border-black rounded-3xl p-4 shadow-[4px_4px_0_0_#000] flex flex-col justify-between">
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("pemasukan")}
+            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
+              !isPengeluaran
+                ? "bg-[#60D689] shadow-[4px_4px_0_0_#000]"
+                : "bg-[#60D689]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+            }`}
+          >
             <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
             <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
-          </div>
+          </button>
         </div>
 
         {/* Bar Chart CSS */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
-            {t("grafik_pengeluaran")}
-            <span className="text-xl">📉</span>
+            {chartTitle}
+            <span className="text-xl">{isPengeluaran ? "📉" : "📈"}</span>
           </h2>
 
           <div className="flex justify-between items-end h-56 border-b-4 border-black pb-2 gap-4 relative">
             <div className="absolute top-0 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
             <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
 
-            {currentMonthData.grafik.map(d => (
-              <div key={d.minggu} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
-                <div
-                  className="w-full bg-[#FF7676] border-2 border-black rounded-t-lg relative transition-all group-hover:bg-[#FF5555] group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000]"
-                  style={{ height: `${(d.pengeluaran / maxPengeluaran) * 100}%`, minHeight: '15%' }}
-                >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
-                    {d.pengeluaran.toLocaleString('id-ID')}
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
+            {currentMonthData.grafik.map(d => {
+              const val = isPengeluaran ? d.pengeluaran : d.pemasukan;
+              return (
+                <div key={d.minggu} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
+                  <div
+                    className={`w-full border-2 border-black rounded-t-lg relative transition-all group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000] ${
+                      isPengeluaran 
+                        ? 'bg-[#FF7676] hover:bg-[#FF5555]' 
+                        : 'bg-[#60D689] hover:bg-[#4ECA79]'
+                    }`}
+                    style={{ height: `${(val / maxVal) * 100}%`, minHeight: '15%' }}
+                  >
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
+                      {val.toLocaleString('id-ID')}
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
+                    </div>
                   </div>
+                  <span className="text-[10px] font-black uppercase text-black">
+                    {translateMingguAbbr(d.minggu)}
+                  </span>
                 </div>
-                <span className="text-[10px] font-black uppercase text-black">
-                  {translateMingguAbbr(d.minggu)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
-            <span>{t("rata_rata_pengeluaran")}</span>
-            <span className="text-black text-xs">Rp {Math.round(totalPengeluaran / 4).toLocaleString('id-ID')} / {t("minggu")}</span>
+            <span>{averageTitle}</span>
+            <span className="text-black text-xs">Rp {Math.round(activeTotal / 4).toLocaleString('id-ID')} / {t("minggu")}</span>
           </div>
         </div>
 
         {/* Rincian Kategori */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
-            {t("rincian_kategori")}
-            <span className="text-xl">🍔</span>
+            {isPengeluaran ? t("rincian_kategori") : (isEn ? "Income Breakdown" : "Rincian Pemasukan")}
+            <span className="text-xl">{isPengeluaran ? "🍔" : "💰"}</span>
           </h2>
 
           <div className="flex flex-col gap-4">
-            {currentMonthData.kategori.length === 0 ? (
+            {activeKategori.length === 0 ? (
               <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                {t("belum_ada_pengeluaran_bulan_ini")}
+                {noCategoryMsg}
               </div>
             ) : (
-              currentMonthData.kategori.map((kat) => {
+              activeKategori.map((kat) => {
                 const info = KATEGORI_LIST.find(k => k.id === kat.id);
                 if (!info) return null;
-                const persen = totalPengeluaran > 0 ? (kat.total / totalPengeluaran) * 100 : 0;
+                const persen = activeTotal > 0 ? (kat.total / activeTotal) * 100 : 0;
 
                 return (
                   <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">

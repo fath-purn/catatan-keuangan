@@ -2,7 +2,7 @@ import VerifyForm from "@/components/auth/verify-form";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Verifikasi Email | Catatan Keuangan",
+  title: "Verifikasi Email | Finfeel",
 };
 
 export default async function VerifyPage({

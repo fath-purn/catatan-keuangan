@@ -13,8 +13,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Catatan Keuangan",
-  description: "Aplikasi Catatan Keuangan Pribadi",
+  title: "Finfeel",
+  description: "Aplikasi Finfeel Pribadi",
 };
 
 
@@ -32,15 +32,15 @@ export default async function RootLayout({
         <LanguageProvider initialLocale={locale}>
           {/* Mobile View Container */}
           <div className="w-full sm:max-w-[400px] bg-gray-50 h-[100dvh] sm:h-[90vh] sm:rounded-[40px] sm:shadow-2xl relative flex flex-col sm:border-[8px] sm:border-slate-800 overflow-hidden">
-            
+
             {/* Main Content Area (Scrollable) */}
             <main className="flex-1 overflow-y-auto text-gray-900 pb-24 relative">
               {children}
             </main>
-            
+
             {/* Bottom Navigation */}
             <BottomNav />
-            
+
           </div>
         </LanguageProvider>
       </body>

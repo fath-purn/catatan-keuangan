@@ -8,11 +8,17 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendVerificationEmail = async (email: string, code: string, isReset = false) => {
+export const sendVerificationEmail = async (
+  email: string,
+  code: string,
+  isReset = false,
+) => {
   const mailOptions = {
-    from: `"Catatan Keuangan" <${process.env.EMAIL_USER}>`,
+    from: `"Finfeel" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: isReset ? "Reset Kata Sandi - Catatan Keuangan" : "Kode Verifikasi Email - Catatan Keuangan",
+    subject: isReset
+      ? "Reset Kata Sandi - Finfeel"
+      : "Kode Verifikasi Email - Finfeel",
     html: `
       <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 4px solid black; border-radius: 20px; background-color: #FDF8EE; box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);">
         <h1 style="font-weight: 900; text-transform: uppercase; text-align: center; color: black; border-bottom: 2px solid black; padding-bottom: 10px;">
@@ -20,7 +26,7 @@ export const sendVerificationEmail = async (email: string, code: string, isReset
         </h1>
         <p style="font-weight: bold; text-align: center; margin-top: 20px;">Halo!</p>
         <p style="text-align: center;">
-          ${isReset ? "Kami menerima permintaan reset kata sandi. Gunakan kode di bawah ini:" : "Gunakan kode di bawah ini untuk memverifikasi akun Catatan Keuangan kamu:"}
+          ${isReset ? "Kami menerima permintaan reset kata sandi. Gunakan kode di bawah ini:" : "Gunakan kode di bawah ini untuk memverifikasi akun Finfeel kamu:"}
         </p>
         <div style="background-color: white; border: 2px solid black; padding: 15px; margin: 20px 0; text-align: center; font-size: 32px; font-weight: 900; letter-spacing: 5px; box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);">
           ${code}
