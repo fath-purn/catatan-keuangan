@@ -31,7 +31,7 @@ export default function LaporanMingguan() {
     hasOlderData: boolean;
   } | null>(null);
 
-  const translateKategori = (val: string) => {
+  const translateKategori = (val: string): string => {
     if (val === "Makanan") return t("opt_makanan");
     if (val === "Transportasi") return t("opt_transportasi");
     if (val === "Belanja") return t("opt_belanja");
@@ -40,7 +40,7 @@ export default function LaporanMingguan() {
     return t("opt_lainnya");
   };
 
-  const translateDay = (day: string) => {
+  const translateDay = (day: string): string => {
     if (day === "Sen") return t("day_sen");
     if (day === "Sel") return t("day_sel");
     if (day === "Rab") return t("day_rab");
@@ -52,19 +52,27 @@ export default function LaporanMingguan() {
   };
 
   useEffect(() => {
-    setLoading(true);
-    getWeeklyReport(weekOffset)
-      .then((data) => {
-        if (data) {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await getWeeklyReport(weekOffset);
+        if (isMounted && data) {
           setReportData(data);
         }
-      })
-      .catch((err) => {
-        console.error("Gagal memuat laporan mingguan:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      } catch (err) {
+        if (isMounted) console.error("Gagal memuat laporan mingguan:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [weekOffset]);
 
   const handleExportCSV = async () => {

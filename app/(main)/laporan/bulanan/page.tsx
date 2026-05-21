@@ -31,7 +31,7 @@ export default function LaporanBulanan() {
     hasOlderData: boolean;
   } | null>(null);
 
-  const translateKategori = (val: string) => {
+  const translateKategori = (val: string): string => {
     if (val === "Makanan") return t("opt_makanan");
     if (val === "Transportasi") return t("opt_transportasi");
     if (val === "Belanja") return t("opt_belanja");
@@ -40,24 +40,32 @@ export default function LaporanBulanan() {
     return t("opt_lainnya");
   };
 
-  const translateMingguAbbr = (minggu: string) => {
+  const translateMingguAbbr = (minggu: string): string => {
     return minggu.replace("Mg", t("abbr_minggu"));
   };
 
   useEffect(() => {
-    setLoading(true);
-    getMonthlyReport(monthOffset)
-      .then((data) => {
-        if (data) {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await getMonthlyReport(monthOffset);
+        if (isMounted && data) {
           setReportData(data);
         }
-      })
-      .catch((err) => {
-        console.error("Gagal memuat laporan bulanan:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      } catch (err) {
+        if (isMounted) console.error("Gagal memuat laporan bulanan:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [monthOffset]);
 
   const handleExportCSV = async () => {
