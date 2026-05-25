@@ -19,8 +19,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="absolute bottom-0 w-full z-50 bg-[#FDF8EE] border-t-4 border-black pb-safe">
-      <div className="flex justify-around items-center h-16 px-2">
+    <nav className="absolute bottom-0 md:bottom-8 w-full md:w-auto md:left-1/2 md:-translate-x-1/2 z-50 bg-[#FDF8EE] md:bg-white/70 md:backdrop-blur-lg border-t-4 md:border-4 border-black pb-safe md:pb-0 md:rounded-full md:shadow-[0_8px_32px_rgba(0,0,0,0.1),_4px_4px_0_0_#000] transition-all">
+      <div className="flex justify-around items-center h-16 px-2 md:px-6 md:gap-6">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

@@ -31,7 +31,7 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
 
       {/* Header Biru Atas (Ikut Scroll) */}
       <div className="bg-[#86B6F6] px-5 pt-8 pb-4 relative z-10">
-        <div className="flex justify-between items-center">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex flex-col text-white drop-shadow-md">
             <h1 className="text-3xl font-black mb-1">{t.semua_transaksi}</h1>
             <p className="text-xs font-bold opacity-90 tracking-wide">{t.kelola_transaksi_di_sini}</p>
@@ -45,15 +45,17 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
       {/* Header Biru Bawah (Sticky Search Bar) */}
       <div className="sticky top-0 z-[90] bg-[#86B6F6] px-5 pb-8 pt-2 rounded-b-[40px] border-b-4 border-black shadow-[0_8px_0_0_#000] -mt-[1px]">
         {/* Search Bar */}
-        <Suspense fallback={<div className="bg-white/20 border-2 border-transparent rounded-2xl flex items-center px-4 py-3 h-[48px] animate-pulse w-full"></div>}>
-          <Search placeholder={t.cari_transaksi} />
-        </Suspense>
+        <div className="max-w-5xl mx-auto w-full">
+          <Suspense fallback={<div className="bg-white/20 border-2 border-transparent rounded-2xl flex items-center px-4 py-3 h-[48px] animate-pulse w-full"></div>}>
+            <Search placeholder={t.cari_transaksi} />
+          </Suspense>
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 mt-8 flex flex-col gap-6">
+      <div className="max-w-5xl mx-auto w-full px-4 md:px-8 mt-8 flex flex-col md:flex-row gap-6 md:gap-8 items-start">
 
         {/* Filter Card */}
-        <div className="bg-white border-2 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000] flex flex-col gap-5">
+        <div className="bg-white border-2 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000] flex flex-col gap-5 w-full md:w-1/3 md:sticky md:top-28">
 
           {/* Tabs */}
           <Suspense fallback={<div className="h-10 bg-[#FDF8EE] rounded-2xl border-2 border-black shadow-inner animate-pulse"></div>}>
@@ -81,9 +83,11 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
         </div>
 
         {/* Transaction List Wrapper Client (Data dinamis dari database terfilter) */}
-        <Suspense fallback={<TransactionListSkeleton />}>
-          <TransactionListSection searchParams={searchParams} />
-        </Suspense>
+        <div className="w-full md:w-2/3 flex flex-col">
+          <Suspense fallback={<TransactionListSkeleton />}>
+            <TransactionListSection searchParams={searchParams} />
+          </Suspense>
+        </div>
 
       </div>
     </div>

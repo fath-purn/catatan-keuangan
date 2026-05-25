@@ -79,13 +79,13 @@ export default function LaporanBulanan() {
 
       // Construct CSV string with UTF-8 BOM to support Indonesian/English Excel compatibility
       const headers = [
-        t("tanggal"), 
-        t("keterangan"), 
-        t("opt_semua") === "All" ? "Type" : "Jenis", 
-        t("kategori"), 
-        t("aset"), 
-        t("opt_semua") === "All" ? "Amount" : "Nominal", 
-        t("keperluan"), 
+        t("tanggal"),
+        t("keterangan"),
+        t("opt_semua") === "All" ? "Type" : "Jenis",
+        t("kategori"),
+        t("aset"),
+        t("opt_semua") === "All" ? "Amount" : "Nominal",
+        t("keperluan"),
         t("mood")
       ];
       const csvRows = [headers.join(",")];
@@ -98,12 +98,12 @@ export default function LaporanBulanan() {
           translateKategori(row.kategori),
           row.aset === "Cash" && t("opt_semua") === "All" ? "Cash" : (row.aset === "Cash" ? "Tunai" : row.aset),
           row.nominal,
-          row.keperluan === "Kebutuhan" ? t("opt_kebutuhan") : 
-          row.keperluan === "Impulsif" ? t("opt_impulsif") : 
-          row.keperluan === "Emergency" ? t("opt_emergency") : t("opt_goals"),
+          row.keperluan === "Kebutuhan" ? t("opt_kebutuhan") :
+            row.keperluan === "Impulsif" ? t("opt_impulsif") :
+              row.keperluan === "Emergency" ? t("opt_emergency") : t("opt_goals"),
           row.mood === "Senang" ? t("opt_senang") :
-          row.mood === "Marah" ? t("opt_marah") :
-          row.mood === "Sedih" ? t("opt_sedih") : t("opt_biasa")
+            row.mood === "Marah" ? t("opt_marah") :
+              row.mood === "Sedih" ? t("opt_sedih") : t("opt_biasa")
         ];
         csvRows.push(values.join(","));
       }
@@ -152,13 +152,13 @@ export default function LaporanBulanan() {
 
   const totalPengeluaran = currentMonthData.totalPengeluaran;
   const totalPemasukan = currentMonthData.totalPemasukan;
-  
+
   const isPengeluaran = activeTab === "pengeluaran";
   const activeTotal = isPengeluaran ? totalPengeluaran : totalPemasukan;
-  
+
   const maxVal = Math.max(...currentMonthData.grafik.map(d => isPengeluaran ? d.pengeluaran : d.pemasukan)) || 1;
   const isEn = t("opt_semua") === "All";
-  
+
   const chartTitle = isPengeluaran
     ? t("grafik_pengeluaran")
     : (isEn ? "Income Chart" : "Grafik Pemasukan");
@@ -167,182 +167,201 @@ export default function LaporanBulanan() {
     ? t("rata_rata_pengeluaran")
     : (isEn ? "Average Income" : "Rata-rata Pemasukan");
 
-  const activeKategori = isPengeluaran 
-    ? currentMonthData.kategori 
+  const activeKategori = isPengeluaran
+    ? currentMonthData.kategori
     : (currentMonthData.kategoriPemasukan || []);
 
-  const noCategoryMsg = isPengeluaran 
-    ? t("belum_ada_pengeluaran_bulan_ini") 
+  const noCategoryMsg = isPengeluaran
+    ? t("belum_ada_pengeluaran_bulan_ini")
     : (isEn ? "No income recorded this month" : "Belum ada pemasukan di bulan ini");
 
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black pb-10">
 
-      {/* Header Sticky Neo-Brutalist (Warna Oren untuk Bulanan) */}
-      <div className="bg-[#FFB443] px-5 pt-8 pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20">
-        <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
-          <FiArrowLeft className="w-5 h-5 font-black text-black" />
-        </Link>
-        <h1 className="text-xl font-black text-black uppercase">{t("bulanan")}</h1>
-        <div className="w-10"></div>
+      {/* Header Sticky Neo-Brutalist */}
+      <div className="bg-[#FFB443] px-5 pt-8 pb-6 border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+          <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
+            <FiArrowLeft className="w-5 h-5 font-black text-black" />
+          </Link>
+          <h1 className="text-xl font-black text-black uppercase">{t("bulanan")}</h1>
+          <div className="w-10"></div>
+        </div>
       </div>
 
-      <div className="p-5 flex flex-col gap-6 mt-2">
+      <div className="max-w-5xl mx-auto w-full p-5 md:px-8 flex flex-col gap-6 mt-2">
 
-        {/* Navigasi Bulan */}
-        <div className="flex justify-between items-center bg-white border-4 border-black rounded-2xl p-2 shadow-[4px_4px_0_0_#000]">
-          <button
-            onClick={() => setMonthOffset(monthOffset - 1)}
-            disabled={loading || !currentMonthData.hasOlderData}
-            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || !currentMonthData.hasOlderData ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
-          >
-            <FiChevronLeft className="w-5 h-5" />
-          </button>
+        {/* Header Actions Desktop Row */}
+        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between w-full">
+          <div className="w-full md:w-1/2">
+            {/* Navigasi Bulan */}
+            <div className="flex justify-between items-center bg-white border-4 border-black rounded-2xl p-2 shadow-[4px_4px_0_0_#000]">
+              <button
+                onClick={() => setMonthOffset(monthOffset - 1)}
+                disabled={loading || !currentMonthData.hasOlderData}
+                className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || !currentMonthData.hasOlderData ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
+              >
+                <FiChevronLeft className="w-5 h-5" />
+              </button>
 
-          <div className="flex flex-col items-center">
-            <span className="font-black text-sm uppercase">{currentMonthData.periode}</span>
-            {monthOffset === 0 ? (
-              <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">{t("bulan_ini")}</span>
-            ) : (
-              <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} {t("bulan_lalu")}</span>
-            )}
-          </div>
-
-          <button
-            onClick={() => setMonthOffset(monthOffset + 1)}
-            disabled={loading || monthOffset === 0}
-            className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || monthOffset === 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
-          >
-            <FiChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Tombol Export Laporan Bulanan */}
-        <button
-          onClick={handleExportCSV}
-          disabled={exporting || loading}
-          className="w-full bg-[#87CEFA] border-4 border-black rounded-2xl p-4 font-black uppercase text-xs shadow-[4px_4px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0_0_#000] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
-        >
-          {exporting ? (
-            <>
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-              {t("mengekspor_laporan")}
-            </>
-          ) : (
-            <>
-              📥 {t("export_laporan_csv")}
-            </>
-          )}
-        </button>
-
-        {/* Ringkasan */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setActiveTab("pengeluaran")}
-            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
-              isPengeluaran
-                ? "bg-[#FF7676] shadow-[4px_4px_0_0_#000]"
-                : "bg-[#FF7676]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
-            }`}
-          >
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
-            <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("pemasukan")}
-            className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${
-              !isPengeluaran
-                ? "bg-[#60D689] shadow-[4px_4px_0_0_#000]"
-                : "bg-[#60D689]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
-            }`}
-          >
-            <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
-            <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
-          </button>
-        </div>
-
-        {/* Bar Chart CSS */}
-        <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
-          <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
-            {chartTitle}
-            <span className="text-xl">{isPengeluaran ? "📉" : "📈"}</span>
-          </h2>
-
-          <div className="flex justify-between items-end h-56 border-b-4 border-black pb-2 gap-4 relative">
-            <div className="absolute top-0 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
-            <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
-
-            {currentMonthData.grafik.map(d => {
-              const val = isPengeluaran ? d.pengeluaran : d.pemasukan;
-              return (
-                <div key={d.minggu} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
-                  <div
-                    className={`w-full border-2 border-black rounded-t-lg relative transition-all group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000] ${
-                      isPengeluaran 
-                        ? 'bg-[#FF7676] hover:bg-[#FF5555]' 
-                        : 'bg-[#60D689] hover:bg-[#4ECA79]'
-                    }`}
-                    style={{ height: `${(val / maxVal) * 100}%`, minHeight: '15%' }}
-                  >
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
-                      {val.toLocaleString('id-ID')}
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-black">
-                    {translateMingguAbbr(d.minggu)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
-            <span>{averageTitle}</span>
-            <span className="text-black text-xs">Rp {Math.round(activeTotal / 4).toLocaleString('id-ID')} / {t("minggu")}</span>
-          </div>
-        </div>
-
-        {/* Rincian Kategori */}
-        <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
-          <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
-            {isPengeluaran ? t("rincian_kategori") : (isEn ? "Income Breakdown" : "Rincian Pemasukan")}
-            <span className="text-xl">{isPengeluaran ? "🍔" : "💰"}</span>
-          </h2>
-
-          <div className="flex flex-col gap-4">
-            {activeKategori.length === 0 ? (
-              <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
-                {noCategoryMsg}
+              <div className="flex flex-col items-center">
+                <span className="font-black text-sm uppercase">{currentMonthData.periode}</span>
+                {monthOffset === 0 ? (
+                  <span className="text-[10px] font-bold text-[#FF7676] bg-[#FF7676]/20 px-2 py-0.5 rounded-full mt-0.5 border border-[#FF7676]">{t("bulan_ini")}</span>
+                ) : (
+                  <span className="text-[10px] font-bold text-gray-500 mt-0.5">{Math.abs(monthOffset)} {t("bulan_lalu")}</span>
+                )}
               </div>
-            ) : (
-              activeKategori.map((kat) => {
-                const info = KATEGORI_LIST.find(k => k.id === kat.id);
-                if (!info) return null;
-                const persen = activeTotal > 0 ? (kat.total / activeTotal) * 100 : 0;
 
-                return (
-                  <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
-                    <div className="flex justify-between items-center text-xs font-bold text-black">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-[#FDF8EE] border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]">
-                          {info.icon}
-                        </span>
-                        <span className="uppercase">{translateKategori(info.id)}</span>
-                      </div>
-                      <span>Rp {kat.total.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
-                      <div className="h-full bg-[#FFB443] border-r-2 border-black" style={{ width: `${Math.min(persen, 100)}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+              <button
+                onClick={() => setMonthOffset(monthOffset + 1)}
+                disabled={loading || monthOffset === 0}
+                className={`w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center transition-all ${loading || monthOffset === 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-gray-100 active:scale-95 hover:bg-gray-200'}`}
+              >
+                <FiChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="w-full md:w-1/3">
+            {/* Tombol Export Laporan Bulanan */}
+            <button
+              onClick={handleExportCSV}
+              disabled={exporting || loading}
+              className="w-full bg-[#87CEFA] border-4 border-black rounded-2xl p-4 font-black uppercase text-xs shadow-[4px_4px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0_0_#000] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {exporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                  {t("mengekspor_laporan")}
+                </>
+              ) : (
+                <>
+                  📥 {t("export_laporan_csv")}
+                </>
+              )}
+            </button>
           </div>
         </div>
 
+        {/* Grid Split Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+
+          {/* Kolom Kiri */}
+          <div className="flex flex-col gap-6 md:gap-8">
+
+            {/* Ringkasan */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setActiveTab("pengeluaran")}
+                className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${isPengeluaran
+                  ? "bg-[#FF7676] shadow-[4px_4px_0_0_#000]"
+                  : "bg-[#FF7676]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+                  }`}
+              >
+                <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pengeluaran").split(" ").pop()}</span>
+                <p className="text-lg font-black leading-tight">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("pemasukan")}
+                className={`border-4 border-black rounded-3xl p-4 flex flex-col justify-between text-left transition-all active:scale-95 ${!isPengeluaran
+                  ? "bg-[#60D689] shadow-[4px_4px_0_0_#000]"
+                  : "bg-[#60D689]/30 opacity-60 shadow-[1px_1px_0_0_#000] translate-x-[3px] translate-y-[3px]"
+                  }`}
+              >
+                <span className="text-[10px] font-bold uppercase bg-white/50 px-2 py-1 border border-black rounded shadow-[2px_2px_0_0_#000] w-fit mb-4">{t("total_pemasukan").split(" ").pop()}</span>
+                <p className="text-lg font-black leading-tight">Rp {totalPemasukan.toLocaleString('id-ID')}</p>
+              </button>
+            </div>
+
+            {/* Bar Chart CSS */}
+            <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
+              <h2 className="text-sm font-black uppercase mb-6 flex items-center justify-between">
+                {chartTitle}
+                <span className="text-xl">{isPengeluaran ? "📉" : "📈"}</span>
+              </h2>
+
+              <div className="flex justify-between items-end h-56 border-b-4 border-black pb-2 gap-4 relative">
+                <div className="absolute top-0 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
+                <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dashed border-gray-300 pointer-events-none"></div>
+
+                {currentMonthData.grafik.map(d => {
+                  const val = isPengeluaran ? d.pengeluaran : d.pemasukan;
+                  return (
+                    <div key={d.minggu} className="flex flex-col items-center gap-2 w-full h-full justify-end group cursor-pointer">
+                      <div
+                        className={`w-full border-2 border-black rounded-t-lg relative transition-all group-active:scale-95 origin-bottom z-10 shadow-[2px_0_0_0_#000] ${isPengeluaran
+                          ? 'bg-[#FF7676] hover:bg-[#FF5555]'
+                          : 'bg-[#60D689] hover:bg-[#4ECA79]'
+                          }`}
+                        style={{ height: `${(val / maxVal) * 100}%`, minHeight: '15%' }}
+                      >
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-[#E4F087] text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-[2px_2px_0_0_#E4F087]">
+                          {val.toLocaleString('id-ID')}
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-black"></div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-black">
+                        {translateMingguAbbr(d.minggu)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between text-[10px] font-bold text-black/70 bg-gray-50 border-2 border-black rounded-xl px-3 py-2">
+                <span>{averageTitle}</span>
+                <span className="text-black text-xs">Rp {Math.round(activeTotal / 4).toLocaleString('id-ID')} / {t("minggu")}</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Kolom Kanan */}
+          <div className="flex flex-col gap-6 md:gap-8">
+
+            {/* Rincian Kategori */}
+            <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
+              <h2 className="text-sm font-black uppercase flex items-center justify-between border-b-2 border-black pb-3 mb-4">
+                {isPengeluaran ? t("rincian_kategori") : (isEn ? "Income Breakdown" : "Rincian Pemasukan")}
+                <span className="text-xl">{isPengeluaran ? "🍔" : "💰"}</span>
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                {activeKategori.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500 font-bold text-xs uppercase">
+                    {noCategoryMsg}
+                  </div>
+                ) : (
+                  activeKategori.map((kat) => {
+                    const info = KATEGORI_LIST.find(k => k.id === kat.id);
+                    if (!info) return null;
+                    const persen = activeTotal > 0 ? (kat.total / activeTotal) * 100 : 0;
+
+                    return (
+                      <div key={kat.id} className="flex flex-col gap-1.5 transition-transform active:scale-[0.98] cursor-pointer">
+                        <div className="flex justify-between items-center text-xs font-bold text-black">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#FDF8EE] border-2 border-black rounded-lg p-1 w-8 h-8 flex items-center justify-center text-sm shadow-[2px_2px_0_0_#000]">
+                              {info.icon}
+                            </span>
+                            <span className="uppercase">{translateKategori(info.id)}</span>
+                          </div>
+                          <span>Rp {kat.total.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="h-2 w-full bg-[#FDF8EE] border-2 border-black rounded-full overflow-hidden mt-1 shadow-inner">
+                          <div className="h-full bg-[#FFB443] border-r-2 border-black" style={{ width: `${Math.min(persen, 100)}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   );

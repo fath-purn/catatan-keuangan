@@ -21,18 +21,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} font-sans antialiased bg-slate-200 sm:py-6 h-[100dvh] flex justify-center items-center overflow-hidden`}>
+      <body className={`${poppins.variable} font-sans antialiased bg-[#FDF8EE] h-[100dvh] flex flex-col overflow-hidden`}>
 
-        {/* Mobile View Container */}
-        <div className="w-full sm:max-w-[400px] bg-gray-50 h-[100dvh] sm:h-[90vh] sm:rounded-[40px] sm:shadow-2xl relative flex flex-col sm:border-[8px] sm:border-slate-800 overflow-hidden">
+        {/* Full View Container */}
+        <div className="w-full h-full relative flex flex-col overflow-hidden">
 
           {/* Main Content Area (Scrollable) */}
-          <main className="flex-1 overflow-y-auto text-gray-900 pb-24 relative">
+          <main className="flex-1 overflow-y-auto text-gray-900 relative">
             {children}
           </main>
-
-          {/* Bottom Navigation */}
-          {/* <BottomNav /> */}
 
         </div>
 

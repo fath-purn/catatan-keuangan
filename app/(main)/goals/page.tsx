@@ -13,19 +13,21 @@ export default async function GoalsPage() {
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black">
       {/* Header Sticky Neo-Brutalist */}
-      <div className="bg-[#FF7676] px-5 pt-8 pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20">
-        {/* Pesan Motivasi */}
-        <div className="flex flex-col gap-1 mb-2">
-          <h2 className="text-2xl font-black uppercase text-black drop-shadow-[2px_2px_0_#DBCBFF]">
-            {t.goals_mimpi_besar}
-          </h2>
-          <p className="text-xs font-bold text-gray-800 bg-white border-2 border-black px-3 py-2 w-fit rounded-xl shadow-[2px_2px_0_0_#000] -rotate-2 mt-1">
-            {t.goals_motivasi_tabung}
-          </p>
+      <div className="bg-[#FF7676] px-5 pt-8 pb-6 border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+          {/* Pesan Motivasi */}
+          <div className="flex flex-col gap-1 mb-2">
+            <h2 className="text-2xl font-black uppercase text-black drop-shadow-[2px_2px_0_#DBCBFF]">
+              {t.goals_mimpi_besar}
+            </h2>
+            <p className="text-xs font-bold text-gray-800 bg-white border-2 border-black px-3 py-2 w-fit rounded-xl shadow-[2px_2px_0_0_#000] -rotate-2 mt-1">
+              {t.goals_motivasi_tabung}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="px-5 py-6 flex flex-col gap-6">
+      <div className="max-w-5xl mx-auto w-full px-5 py-6 flex flex-col gap-6">
         {/* Total Keseluruhan Goals */}
         <div className="bg-white border-4 border-black rounded-3xl p-5 shadow-[4px_4px_0_0_#000]">
           <h2 className="text-xs font-bold uppercase tracking-wider mb-2">{t.goals_total_terkumpul}</h2>
@@ -80,7 +82,7 @@ export default async function GoalsPage() {
                 </div>
 
                 <p className="text-[11px] font-bold text-black/80 mb-4 px-1 italic">
-                  "{goal.motivasi}"
+                  &quot;{goal.motivasi}&quot;
                 </p>
 
                 <div className="flex flex-col gap-2 bg-white/40 p-3 rounded-2xl border-2 border-black/20">
@@ -113,7 +115,7 @@ export default async function GoalsPage() {
         )}
 
         {/* Floating Action Button */}
-        <div className="fixed inset-0 z-30 pointer-events-none sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto">
+        <div className="fixed inset-0 z-30 pointer-events-none max-w-5xl mx-auto w-full">
           <Link href="/goals/tambah" className="absolute bottom-24 right-6 w-14 h-14 flex items-center justify-center bg-[#E4F087] border-4 border-black rounded-full shadow-[4px_4px_0_0_#000] transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none pointer-events-auto hover:bg-[#d4e076]">
             <FiPlus className="w-6 h-6 font-black text-black" />
           </Link>
@@ -122,4 +124,3 @@ export default async function GoalsPage() {
     </div>
   );
 }
-

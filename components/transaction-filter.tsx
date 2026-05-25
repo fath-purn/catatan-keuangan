@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
@@ -57,6 +58,12 @@ export function TransactionTimeFilter() {
   const { t } = useLanguage();
 
   const [showPicker, setShowPicker] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   const date = new Date();
 
   const currentBulanParam = searchParams.get("bulan");
@@ -69,7 +76,7 @@ export function TransactionTimeFilter() {
 
   const indonesianMonths = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  
+
   const currentMonthNames = t("opt_semua") === "All" ? englishMonths : indonesianMonths;
 
   const getDisplayText = () => {
@@ -106,7 +113,7 @@ export function TransactionTimeFilter() {
         <FiChevronDown className="w-4 h-4 text-black font-bold" />
       </button>
 
-      {showPicker && (
+      {mounted && showPicker ? createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto sm:rounded-[40px] overflow-hidden">
           <div
             className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
@@ -169,18 +176,18 @@ export function TransactionTimeFilter() {
             </button>
           </div>
         </div>
-      )}
+        , document.body) : null}
     </>
   );
 }
 
 // Komponen Select Kustom
-function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty = false }: any) {
+function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty = false }: { label: string, value: string, onChange: (value: string) => void, options: { id: string, icon: string, label: string }[], defaultText: string, hideEmpty?: boolean }) {
   const [open, setOpen] = useState(false);
-  const selected = options.find((o: any) => o.id === value);
+  const selected = options.find((o: { id: string, icon: string, label: string }) => o.id === value);
 
   return (
-    <div className="flex flex-col gap-1.5 relative">
+    <div className={`flex flex-col gap-1.5 relative ${open ? "z-50" : "z-10"}`}>
       <label className="text-[10px] font-bold text-black uppercase tracking-wider ml-1">{label}</label>
 
       {/* Overlay layar penuh untuk menutup dropdown ketika klik di luar */}
@@ -210,7 +217,7 @@ function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty 
               {defaultText}
             </button>
           )}
-          {options.map((o: any) => (
+          {options.map((o: { id: string, icon: string, label: string }) => (
             <button
               key={o.id}
               onClick={() => { onChange(o.id); setOpen(false); }}
@@ -230,6 +237,12 @@ function CustomSelect({ label, value, onChange, options, defaultText, hideEmpty 
 
 export default function TransactionFilter({ triggerClassName, triggerContent }: { triggerClassName?: string, triggerContent?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -315,7 +328,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
         )}
       </button>
 
-      {isOpen && (
+      {mounted && isOpen ? createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
@@ -334,7 +347,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
               </button>
             </div>
 
-            <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto no-scrollbar pb-2">
+            <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto overflow-x-visible no-scrollbar pb-48 pt-2">
 
               {/* Kategori - Custom Select */}
               <CustomSelect
@@ -392,7 +405,7 @@ export default function TransactionFilter({ triggerClassName, triggerContent }: 
 
           </div>
         </div>
-      )}
+        , document.body) : null}
     </>
   );
 }

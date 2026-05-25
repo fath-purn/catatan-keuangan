@@ -28,13 +28,13 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${poppins.variable} font-sans antialiased bg-slate-200 sm:py-6 h-[100dvh] flex justify-center items-center overflow-hidden`}>
+      <body className={`${poppins.variable} font-sans antialiased bg-[#FDF8EE] h-[100dvh] overflow-hidden`}>
         <LanguageProvider initialLocale={locale}>
-          {/* Mobile View Container */}
-          <div className="w-full sm:max-w-[400px] bg-gray-50 h-[100dvh] sm:h-[90vh] sm:rounded-[40px] sm:shadow-2xl relative flex flex-col sm:border-[8px] sm:border-slate-800 overflow-hidden">
+          {/* App Container */}
+          <div className="w-full bg-[#FDF8EE] h-[100dvh] relative flex flex-col overflow-hidden">
 
             {/* Main Content Area (Scrollable) */}
-            <main className="flex-1 overflow-y-auto text-gray-900 pb-24 relative">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden text-gray-900 pb-24 md:pb-32 relative custom-scrollbar">
               {children}
             </main>
 
