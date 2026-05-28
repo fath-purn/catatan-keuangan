@@ -177,9 +177,9 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction }:
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col justify-end font-sans sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto sm:rounded-[40px] overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:justify-center sm:items-center font-sans">
       <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
-      <div className="relative z-10 bg-[#FDF8EE] w-full rounded-t-[32px] border-t-4 border-black shadow-[0_-4px_0_0_rgba(0,0,0,1)] p-6 pb-8 flex flex-col gap-6 animate-in slide-in-from-bottom-10 duration-200 max-h-[90vh] overflow-hidden">
+      <div className="relative z-10 bg-[#FDF8EE] w-full sm:max-w-[420px] rounded-t-[32px] sm:rounded-[24px] border-t-4 sm:border-4 border-black shadow-[0_-4px_0_0_rgba(0,0,0,1)] sm:shadow-[4px_4px_0_0_rgba(0,0,0,1)] p-6 pb-8 flex flex-col gap-6 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200 max-h-[90vh] overflow-hidden">
 
         {/* Handle bar & Header */}
         <div className="shrink-0 flex flex-col">

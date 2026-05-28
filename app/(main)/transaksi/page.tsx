@@ -1,6 +1,4 @@
 import { Suspense } from "react";
-import { FiPlus } from "react-icons/fi";
-import Link from "next/link";
 import TransactionFilter, { TransactionTypeTabs, TransactionTimeFilter } from "@/components/transaction-filter";
 import Search from "@/components/search";
 import { getTransactionsData } from "@/lib/data";

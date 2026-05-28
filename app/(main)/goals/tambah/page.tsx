@@ -67,15 +67,17 @@ export default function TambahGoals() {
   return (
     <div className="min-h-full bg-[#FDF8EE] flex flex-col relative font-sans text-black">
       {/* Header Sticky Neo-Brutalist */}
-      <div className={`${warna} px-5 pt-8 bg-[#FDF8EE] pb-6 flex items-center justify-between border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20 transition-colors duration-300`}>
-        <Link href="/goals" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
-          <FiArrowLeft className="w-5 h-5 font-black text-black" />
-        </Link>
-        <h1 className="text-xl font-black text-black uppercase">{t("buat_goals_baru")}</h1>
-        <div className="w-10"></div>
+      <div className={`${warna} px-5 pt-8 pb-6 border-b-4 border-black shadow-[0_4px_0_0_#000] sticky top-0 z-20 transition-colors duration-300`}>
+        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+          <Link href="/goals" className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full shadow-[2px_2px_0_0_#000] transition-transform active:scale-95">
+            <FiArrowLeft className="w-5 h-5 font-black text-black" />
+          </Link>
+          <h1 className="text-xl font-black text-black uppercase">{t("buat_goals_baru")}</h1>
+          <div className="w-10"></div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col pb-10">
+      <form onSubmit={handleSubmit} className="max-w-xl mx-auto w-full flex-1 flex flex-col pb-10">
 
         {/* Area Input Nominal (Besar) */}
         <div className="px-5 mb-2 flex flex-col items-center mt-6">

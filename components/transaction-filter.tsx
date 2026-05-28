@@ -114,7 +114,7 @@ export function TransactionTimeFilter() {
       </button>
 
       {mounted && showPicker ? createPortal(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:max-w-[400px] sm:mx-auto sm:h-[90vh] sm:my-auto sm:rounded-[40px] overflow-hidden">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
             onClick={() => setShowPicker(false)}

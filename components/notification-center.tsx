@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { IoNotificationsOutline, IoClose } from "react-icons/io5";
+import { createPortal } from "react-dom";
 
 interface NotificationItem {
   id: string;
@@ -18,6 +19,11 @@ export default function NotificationCenter({ notifications }: NotificationCenter
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [permission, setPermission] = useState<string>("default");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Register Service Worker on mount for mobile push notification support
   useEffect(() => {
@@ -139,16 +145,16 @@ export default function NotificationCenter({ notifications }: NotificationCenter
       </button>
 
       {/* Popover / Overlay Drawer */}
-      {isOpen && (
+      {mounted && isOpen && createPortal(
         <>
           {/* Backdrop (Centered Modal style with blur and high z-index) */}
           <div
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in"
+            className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in"
             onClick={toggleOpen}
           />
 
           {/* Neo-Brutalist Modal Container (Centered, heavy shadows, high z-index) */}
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] max-w-[calc(100vw-32px)] bg-[#FDF8EE] border-4 border-black rounded-3xl shadow-[8px_8px_0_0_#000,0_20px_50px_rgba(0,0,0,0.3)] z-[101] overflow-hidden flex flex-col transition-all transform scale-100 animate-in zoom-in-95 duration-200">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[450px] max-w-[calc(100vw-32px)] bg-[#FDF8EE] border-4 border-black rounded-3xl shadow-[8px_8px_0_0_#000,0_20px_50px_rgba(0,0,0,0.3)] z-[999] overflow-hidden flex flex-col transition-all transform scale-100 animate-in zoom-in-95 duration-200 text-black">
             {/* Header Popover */}
             <div className="bg-[#DBCBFF] p-4 border-b-4 border-black flex justify-between items-center">
               <div className="flex flex-col">
@@ -164,7 +170,7 @@ export default function NotificationCenter({ notifications }: NotificationCenter
             </div>
 
             {/* Notification List Body */}
-            <div className="p-4 max-h-[350px] overflow-y-auto flex flex-col gap-3">
+            <div className="p-4 max-h-[350px] sm:max-h-[500px] overflow-y-auto flex flex-col gap-3">
               {/* Native Push Request Button if not granted */}
               {permission !== "granted" && (
                 <div className="bg-[#E4F087] border-2 border-black rounded-xl p-3 shadow-[2px_2px_0_0_#000] flex flex-col gap-2">
@@ -232,7 +238,8 @@ export default function NotificationCenter({ notifications }: NotificationCenter
               </div>
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
